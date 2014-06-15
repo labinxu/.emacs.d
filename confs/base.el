@@ -36,7 +36,7 @@
 (global-hl-line-mode t)
 (require 'generic-x)
 (setq-default indent-tabs-mode nil)
-
+(desktop-save-mode 1)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun xah-cut-line-or-region()
   "Cut the current line, or current text selection."
