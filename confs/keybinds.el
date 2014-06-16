@@ -8,6 +8,11 @@
 (recent-jump-mode t)
 (global-set-key (kbd "C-c C-,") 'recent-jump-forward)
 (global-set-key (kbd "C-c C-.") 'recent-jump-backward)
+;;;;;;;;;;;;;;;;;;;;;;;;;
+(require 'window-numbering)
+(window-numbering-mode t)
+
+
 ;;;;;;;;edit;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (global-set-key (kbd "C-z") 'undo)
 (global-set-key (kbd "<M-up>") 'move-line-up)
