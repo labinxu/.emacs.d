@@ -17,7 +17,7 @@
 (global-set-key (kbd "C-c C-w") 'kill-region)
 (global-set-key (kbd "C-c M-w") 'xah-copy-line-or-region)
 (global-set-key (kbd "C-c M-x") 'xah-cut-line-or-region)
-(global-set-key (kbd "C-=") 'select-text-in-quote)
+(global-set-key (kbd "C-=") 'er/expand-region)
 (global-set-key (kbd "C-c c") 'copy-symbol-at-point)
 (global-set-key (kbd "C-c x") 'cut-symbol-at-point)
 
