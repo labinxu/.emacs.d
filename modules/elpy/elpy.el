@@ -1,10 +1,12 @@
-;;; elpy.el --- Emacs Lisp Python Environment -*- lexical-binding: t -*-
+;;; elpy.el --- Emacs Python Development Environment -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2012-2014  Jorgen Schaefer
 
 ;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>
 ;; URL: https://github.com/jorgenschaefer/elpy
 ;; Version: 1.4.50
+;; Keywords: Python, IDE, Languages, Tools
+;; Package-Requires: ((company "0.8.2") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (idomenu "0.1") (pyvenv "1.3") (yasnippet "0.8.0"))
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
@@ -204,7 +206,6 @@ can use the native backend, which is very limited but does not
 have any external requirements."
   :type '(choice (const :tag "Rope" "rope")
                  (const :tag "Jedi" "jedi")
-                 (const :tag "Native" "native")
                  (const :tag "Automatic" nil))
   :safe (lambda (val)
           (member val '("rope" "jedi" "native" nil)))
@@ -320,6 +321,67 @@ A setting of nil means to block indefinitely."
     map)
   "Key map for the Emacs Lisp Python Environment.")
 
+(easy-menu-define elpy-menu elpy-mode-map
+  "Elpy Mode Menu"
+  '("Elpy"
+    ["Documentation" elpy-doc
+     :help "Get documentation for symbol at point"]
+    ["Run Tests" elpy-test
+     :help "Run test at point, or all tests in the project"]
+    ["Go to Definition" elpy-goto-definition
+     :help "Go to the definition of the symbol at point"]
+    ["Go to previous definition" pop-tag-mark
+     :active (not (ring-empty-p find-tag-marker-ring))
+     :help "Return to the position"]
+    ["Complete" elpy-company-backend
+     :keys "M-TAB"
+     :help "Complete at point"]
+    ["Refactor" elpy-refactor
+     :help "Refactor options"]
+    "---"
+    ("Interactive Python"
+     ["Switch to Python Shell" elpy-shell-switch-to-shell
+      :help "Start and switch to the interactive Python"]
+     ["Send Region or Buffer" elpy-shell-send-region-or-buffer
+      :label (if (use-region-p)
+                 "Send Region to Python"
+               "Send Buffer to Python")
+      :help "Send the current region or the whole buffer to Python"]
+     ["Send Definition" python-shell-send-defun
+      :help "Send current definition to Python"])
+    ("Project"
+     ["Find File" elpy-find-file
+      :help "Interactively find a file in the current project"]
+     ["Find Symbol" elpy-rgrep-symbol
+      :help "Find occurrences of a symbol in the current project"]
+     ["Set Project Root" elpy-set-project-root
+      :help "Change the current project root"]
+     ["Set Project Variable" elpy-set-project-variable
+      :help "Configure a project-specific option"])
+    ("Syntax Check"
+     ["Check Syntax" elpy-check
+      :help "Check the syntax of the current file"]
+     ["Next Error" elpy-flymake-next-error
+      :help "Go to the next inline error, if any"]
+     ["Previous Error" elpy-flymake-previous-error
+      :help "Go to the previous inline error, if any"])
+    ("Indentation Blocks"
+     ["Dedent" elpy-nav-move-iblock-left
+      :help "Dedent current block or region"
+      :suffix (if (use-region-p) "Region" "Block")]
+     ["Indent" elpy-nav-move-iblock-right
+      :help "Indent current block or region"
+      :suffix (if (use-region-p) "Region" "Block")]
+     ["Up" elpy-nav-move-iblock-up
+      :help "Move current block or region up"
+      :suffix (if (use-region-p) "Region" "Block")]
+     ["Down" elpy-nav-move-iblock-down
+      :help "Move current block or region down"
+      :suffix (if (use-region-p) "Region" "Block")])
+    "---"
+    ["News" elpy-news t]
+    ["Configure" elpy-config t]))
+
 ;;;###autoload
 (defun elpy-enable (&optional ignored)
   "Enable Elpy in all future Python buffers."
@@ -366,6 +428,20 @@ more structured list.
     (elpy-modules-buffer-init))
    ((not elpy-mode)
     (elpy-modules-buffer-stop))))
+
+;;;;;;;;;;;;;
+;;; Elpy News
+
+(defun elpy-news ()
+  "Display Elpy's release notes."
+  (interactive)
+  (with-current-buffer (get-buffer-create "*Elpy News*")
+    (let ((inhibit-read-only t))
+      (erase-buffer)
+      (insert-file (concat (file-name-directory (locate-library "elpy"))
+                           "NEWS.rst"))
+      (help-mode))
+    (pop-to-buffer (current-buffer))))
 
 ;;;;;;;;;;;;;;;
 ;;; Elpy Config
@@ -1102,11 +1178,13 @@ With prefix arg, prompt for the command to use."
                        (read-file-name "IPython command: "))))
   (when (not ipython)
     (setq ipython "ipython"))
-  (if (boundp 'python-python-command)
-      ;; Emacs 24 until 24.3
-      (setq python-python-command ipython)
-    ;; Emacs 24.3 and onwards.
-
+  (cond
+   ;; Emacs 24 until 24.3
+   ((boundp 'python-python-command)
+    (setq python-python-command ipython))
+   ;; Emacs 24.3
+   ((and (version<= "24.3" emacs-version)
+         (not (boundp 'python-shell-interpreter-interactive-arg)))
     ;; This is from the python.el commentary.
     ;; Settings for IPython 0.11:
     (setq python-shell-interpreter ipython
@@ -1118,7 +1196,13 @@ With prefix arg, prompt for the command to use."
           python-shell-completion-module-string-code
           "';'.join(module_completion('''%s'''))\n"
           python-shell-completion-string-code
-          "';'.join(get_ipython().Completer.all_completions('''%s'''))\n")))
+          "';'.join(get_ipython().Completer.all_completions('''%s'''))\n"))
+   ;; Emacs 24.4
+   ((boundp 'python-shell-interpreter-interactive-arg)
+    (setq python-shell-interpreter "ipython"
+          python-shell-interpreter-args "-i"))
+   (t
+    (error "I don't know how to set ipython settings for this Emacs"))))
 
 (defun elpy-use-cpython (&optional cpython)
   "Set defaults to use the standard interpreter instead of IPython.
@@ -1128,10 +1212,13 @@ With prefix arg, prompt for the command to use."
                        (read-file-name "Python command: "))))
   (when (not cpython)
     (setq cpython "python"))
-  (if (boundp 'python-python-command)
-      ;; Emacs 24 until 24.3
-      (setq python-python-command cpython)
-    ;; Emacs 24.3 and onwards.
+  (cond
+   ;; Emacs 24 until 24.3
+   ((boundp 'python-python-command)
+    (setq python-python-command cpython))
+   ;; Emacs 24.3 and onwards.
+   ((and (version<= "24.3" emacs-version)
+         (not (boundp 'python-shell-interpreter-interactive-arg)))
     (setq python-shell-interpreter cpython
           python-shell-interpreter-args "-i"
           python-shell-prompt-regexp ">>> "
@@ -1159,7 +1246,13 @@ else:
         return completions"
           python-shell-completion-module-string-code ""
           python-shell-completion-string-code
-          "';'.join(__COMPLETER_all_completions('''%s'''))\n")))
+          "';'.join(__COMPLETER_all_completions('''%s'''))\n"))
+   ;; Emacs 24.4
+   ((boundp 'python-shell-interpreter-interactive-arg)
+    (setq python-shell-interpreter "python"
+          python-shell-interpreter-args "-i"))
+   (t
+    (error "I don't know how to set ipython settings for this Emacs"))))
 
 (defun elpy-shell-send-region-or-buffer (&optional arg)
   "Send the active region or the buffer to the Python shell.
@@ -1176,7 +1269,7 @@ code is executed."
   (elpy-shell-get-or-create-process)
   (let ((if-main-regex "^if +__name__ +== +[\"']__main__[\"'] *:")
         (has-if-main nil))
-    (if (region-active-p)
+    (if (use-region-p)
         (let ((region (elpy-shell--region-without-indentation
                        (region-beginning) (region-end))))
           (setq has-if-main (string-match if-main-regex region))
@@ -1579,7 +1672,7 @@ directory is not nil."
            (file buffer-file-name)
            (module (elpy-test--module-name-for-file top file))
            (test (python-info-current-defun)))
-      (if (and test (string-match "test" test))
+      (if (and file (string-match "/test[^/]*$" file))
           (progn
             (save-buffer)
             (list top file module test))
@@ -1618,11 +1711,12 @@ This uses the `elpy-test-runner-p' symbol property."
 
 This requires Python 2.7 or later."
   (interactive (elpy-test-at-point))
-  (if test
-      (elpy-test-run top
-                     "python" "-m" "unittest" (format "%s.%s" module test))
+  (let ((test (cond
+               (test (format "%s.%s" module test))
+               (module module)
+               (t "discover"))))
     (elpy-test-run top
-                   "python" "-m" "unittest" "discover")))
+                   "python" "-m" "unittest" test)))
 (put 'elpy-test-discover-runner 'elpy-test-runner-p t)
 
 (defun elpy-test-django-runner (top file module test)
@@ -1630,10 +1724,12 @@ This requires Python 2.7 or later."
 
 This requires Django 1.6 or the django-discover-runner package."
   (interactive (elpy-test-at-point))
-  (if test
+  (if module
       (elpy-test-run top
                      "django-admin.py" "test" "--noinput"
-                     (format "%s.%s" module test))
+                     (if test
+                         (format "%s.%s" module test)
+                       module))
     (elpy-test-run top
                    "django-admin.py" "test" "--noinput")))
 (put 'elpy-test-django-runner 'elpy-test-runner-p t)
@@ -1643,9 +1739,11 @@ This requires Django 1.6 or the django-discover-runner package."
 
 This requires the nose package to be installed."
   (interactive (elpy-test-at-point))
-  (if test
+  (if module
       (elpy-test-run top
-                     "nosetests" (format "%s:%s" module test))
+                     "nosetests" (if test
+                                     (format "%s:%s" module test)
+                                   module))
     (elpy-test-run top
                    "nosetests")))
 (put 'elpy-test-nose-runner 'elpy-test-runner-p t)
@@ -1655,14 +1753,19 @@ This requires the nose package to be installed."
 
 This requires the pytest package to be installed."
   (interactive (elpy-test-at-point))
-  (if test
-      ;; Apparently, py.test can't easily run just one method? Let's
-      ;; just run the class.
-      (let ((test-list (split-string test "\\.")))
-        (elpy-test-run top
-                       "py.test" (format "%s::%s" module (car test-list))))
+  (cond
+   (test
+    (let ((test-list (split-string test "\\.")))
+      (elpy-test-run top
+                     "py.test" (mapconcat #'identity
+                                          (cons file test-list)
+                                          "::"))))
+   (module
     (elpy-test-run top
-                   "py.test")))
+                   "py.test" file))
+   (t
+    (elpy-test-run top
+                   "py.test"))))
 (put 'elpy-test-pytest-runner 'elpy-test-runner-p t)
 
 ;;;;;;;;;;;;;;;;;
@@ -1682,8 +1785,17 @@ prefix argument is given, prompt for a symbol from the user."
     (when (not current-prefix-arg)
       (setq doc (elpy-rpc-get-docstring))
       (when (not doc)
+        (save-excursion
+          (python-nav-backward-up-list)
+          (setq doc (elpy-rpc-get-docstring))))
+      (when (not doc)
         (setq doc (elpy-rpc-get-pydoc-documentation
-                   (elpy-doc--symbol-at-point)))))
+                   (elpy-doc--symbol-at-point))))
+      (when (not doc)
+        (save-excursion
+          (python-nav-backward-up-list)
+          (setq doc (elpy-rpc-get-pydoc-documentation
+                     (elpy-doc--symbol-at-point))))))
     (when (not doc)
       (setq doc (elpy-rpc-get-pydoc-documentation
                  (elpy-doc--read-identifier-from-minibuffer
@@ -1940,35 +2052,51 @@ not exist anymore."
        (= (length obj) 5)
        (eq (aref obj 0) elpy-promise-marker)))
 
-(defun elpy-promise-resolved-p (promise)
+(defsubst elpy-promise-success-callback (promise)
+  "Return the success callback for PROMISE."
+  (aref promise 1))
+
+(defsubst elpy-promise-error-callback (promise)
+  "Return the error callback for PROMISE."
+  (aref promise 2))
+
+(defsubst elpy-promise-buffer (promise)
+  "Return the buffer for PROMISE."
+  (aref promise 3))
+
+(defsubst elpy-promise-resolved-p (promise)
   "Return non-nil if the PROMISE has been resolved or rejected."
   (aref promise 4))
 
+(defsubst elpy-promise-set-resolved (promise)
+  "Mark PROMISE as having been resolved."
+  (aset promise 4 t))
+
 (defun elpy-promise-resolve (promise value)
   "Resolve PROMISE with VALUE."
-  (when (not (aref promise 4))
+  (when (not (elpy-promise-resolved-p promise))
     (unwind-protect
-        (let ((success-callback (aref promise 1)))
+        (let ((success-callback (elpy-promise-success-callback promise)))
           (when success-callback
             (condition-case err
-                (with-current-buffer (aref promise 3)
+                (with-current-buffer (elpy-promise-buffer promise)
                   (funcall success-callback value))
               (error
                (elpy-promise-reject promise err)))))
-      (aset promise 4 t))))
+      (elpy-promise-set-resolved promise))))
 
 (defun elpy-promise-reject (promise reason)
   "Reject PROMISE because of REASON."
-  (when (not (aref promise 4))
+  (when (not (elpy-promise-resolved-p promise))
     (unwind-protect
-        (let ((error-callback (aref promise 2)))
+        (let ((error-callback (elpy-promise-error-callback promise)))
           (when error-callback
-            (if (buffer-live-p (aref promise 3))
-                (with-current-buffer (aref promise 3)
+            (if (buffer-live-p (elpy-promise-buffer promise))
+                (with-current-buffer (elpy-promise-buffer promise)
                   (funcall error-callback reason))
               (with-temp-buffer
                 (funcall error-callback reason)))))
-      (aset promise 4 t))))
+      (elpy-promise-set-resolved promise))))
 
 (defun elpy-promise-wait (promise &optional timeout)
   "Wait for PROMISE to be resolved, for up to TIMEOUT seconds.
@@ -2172,24 +2300,14 @@ died, this will kill the process and buffer."
       (set-process-query-on-exit-flag proc nil)
       (set-process-sentinel proc #'elpy-rpc--sentinel)
       (set-process-filter proc #'elpy-rpc--filter)
-      (cond
-       ;; User requested a specific backend
-       (elpy-rpc-backend
-        (elpy-rpc-set-backend
-         elpy-rpc-backend
-         (lambda (result)
-           ;; Requested backend successfully set
-           t)
-         (lambda (err)
-           (elpy-config-error "Requested backend %s not available"
-                              elpy-rpc-backend))))
-       ;; User did not specify a backend, make sure we are not using the
-       ;; native one.
-       (t
-        (elpy-rpc-get-backend
-         (lambda (current-backend)
-           (when (equal current-backend "native")
-             (elpy-config-error "Only native backend found")))))))
+      (elpy-rpc-init elpy-rpc-backend library-root
+                     (lambda (result)
+                       (let ((backend (cdr (assq 'backend result))))
+                         (when (and elpy-rpc-backend
+                                    (not (equal backend elpy-rpc-backend)))
+                           (elpy-config-error
+                            "Can't set backend %s, using %s instead"
+                            elpy-rpc-backend backend))))))
     new-elpy-rpc-buffer))
 
 (defun elpy-rpc--sentinel (process event)
@@ -2297,12 +2415,14 @@ This is usually an error or backtrace."
   "Display an error from the RPC backend."
   ;; We actually might get an (error "foo") thing here.
   (if (and (consp error-object)
-           (eq 'error (car error-object)))
-      (apply 'error (cdr error-object))
+           (not (consp (car error-object))))
+      (signal (car error-object) (cdr error-object))
     (let ((message (cdr (assq 'message error-object)))
           (code (cdr (assq 'code error-object)))
           (data (cdr (assq 'data error-object))))
       (cond
+       ((not (numberp code))
+        (error "Bad response from RPC: %S" error-object))
        ((< code 300)
         (message "Elpy warning: %s" message))
        ((< code 500)
@@ -2325,6 +2445,8 @@ This is usually an error or backtrace."
             (insert "\n"
                     "\n"
                     "```\n")
+            (elpy-insert--header "Error Message")
+            (insert message "\n\n")
             (elpy-insert--header "Configuration")
             (elpy-config--insert-configuration-table config)
             (let ((traceback (cdr (assq 'traceback data))))
@@ -2404,51 +2526,60 @@ protocol if the buffer is larger than
       (ignore-errors
         (kill-buffer buffer)))))
 
-(defun elpy-rpc-get-available-backends (&optional success  error)
-  "Call the get_available_backends API function.
+(defun elpy-rpc-init (backend library-root &optional success error)
+  "Initialize the backend.
 
-Returns a list of names of available backends, depending on which
-Python libraries are installed."
-  (elpy-rpc "get_available_backends" nil success error))
-
-(defun elpy-rpc-get-backend (&optional success error)
-  "Call the get_backend API function.
-
-Returns the name of the backend currently in use."
-  (elpy-rpc "get_backend" nil success error))
+This has to be called as the first method, else Elpy won't be
+able to respond to other calls."
+  (elpy-rpc "init"
+            ;; This uses a vector because otherwise, json-encode in
+            ;; older Emacsen gets seriously confused, especially when
+            ;; backend is nil.
+            (vector `((backend . ,backend)
+                      (project_root . ,(expand-file-name library-root))))
+            success error))
 
 (defun elpy-rpc-get-calltip (&optional success error)
   "Call the get_calltip API function.
 
 Returns a calltip string for the function call at point."
   (elpy-rpc "get_calltip"
-            (list (expand-file-name (elpy-library-root))
-                  buffer-file-name
+            (list buffer-file-name
                   (elpy-rpc--buffer-contents)
                   (- (point)
                      (point-min)))
             success error))
 
 (defun elpy-rpc-get-completions (&optional success error)
-  "Call the find_completions API function.
+  "Call the get_completions API function.
 
 Returns a list of possible completions for the Python symbol at
 point."
   (elpy-rpc "get_completions"
-            (list (expand-file-name (elpy-library-root))
-                  buffer-file-name
+            (list buffer-file-name
                   (elpy-rpc--buffer-contents)
                   (- (point)
                      (point-min)))
             success error))
+
+(defun elpy-rpc-get-completion-docstring (completion &optional success error)
+  "Call the get_completion_docstring API function.
+
+Returns a doc string or nil"
+  (elpy-rpc "get_completion_docstring" (list completion) success error))
+
+(defun elpy-rpc-get-completion-location (completion &optional success error)
+  "Call the get_completion_location API function.
+
+Returns a list of file name and line number, or nil"
+  (elpy-rpc "get_completion_location" (list completion) success error))
 
 (defun elpy-rpc-get-definition (&optional success error)
   "Call the find_definition API function.
 
 Returns nil or a list of (filename, point)."
   (elpy-rpc "get_definition"
-            (list (expand-file-name (elpy-library-root))
-                  buffer-file-name
+            (list buffer-file-name
                   (elpy-rpc--buffer-contents)
                   (- (point)
                      (point-min)))
@@ -2459,8 +2590,7 @@ Returns nil or a list of (filename, point)."
 
 Returns a possible multi-line docstring for the symbol at point."
   (elpy-rpc "get_docstring"
-            (list (expand-file-name (elpy-library-root))
-                  buffer-file-name
+            (list buffer-file-name
                   (elpy-rpc--buffer-contents)
                   (- (point)
                      (point-min)))
@@ -2480,27 +2610,11 @@ Returns a possible multi-line docstring."
 
 (defun elpy-rpc-get-usages (&optional success error)
   (elpy-rpc "get_usages"
-            (list (expand-file-name (elpy-library-root))
-                  buffer-file-name
+            (list buffer-file-name
                   (elpy-rpc--buffer-contents)
                   (- (point)
                      (point-min)))
             success error))
-
-(defun elpy-rpc-set-backend (backend &optional success error)
-  "Call the set_backend API function.
-
-This changes the current backend to the named backend. Raises an
-error if the backend is not supported."
-  (interactive
-   (list (completing-read
-          (format "Switch elpy backend (currently %s): "
-                  (elpy-rpc-get-backend))
-          (elpy-rpc-get-available-backends)
-          nil t)))
-  (elpy-rpc "set_backend" (list backend) success error))
-
-(defalias 'elpy-set-backend 'elpy-rpc-set-backend)
 
 ;;;;;;;;;;;
 ;;; Modules
@@ -2582,7 +2696,7 @@ time. Honestly."
     (`buffer-init
      ;; We want immediate completions from company.
      (set (make-local-variable 'company-idle-delay)
-          t)
+          0)
      ;; And annotations should be right-aligned.
      (set (make-local-variable 'company-tooltip-align-annotations)
           t)
@@ -2626,10 +2740,13 @@ time. Honestly."
   (when elpy-company--cache
     (cdr (assq 'meta (gethash name elpy-company--cache)))))
 
-(defun elpy-company--cache-docstring (name)
-  "Return the cached docstring for NAME."
+(defun elpy-company--cache-name (name)
+  "Return the cached name for NAME.
+
+Confused yet? We pass \"our\" name, that is, prefix + suffix,
+here, and return the \"name\" as used by the backend."
   (when elpy-company--cache
-    (cdr (assq 'docstring (gethash name elpy-company--cache)))))
+    (cdr (assq 'name (gethash name elpy-company--cache)))))
 
 (defun elpy-company--cache-completions (prefix result)
   "Store RESULT in the candidate cache and return candidates."
@@ -2676,20 +2793,32 @@ time. Honestly."
     ;; no-cache <prefix> => t if company shouldn't cache results
     ;; meta <candidate> => short docstring for minibuffer
     (`meta
-     (elpy-company--cache-meta arg))
+     (let ((meta (elpy-company--cache-meta arg)))
+       (when (and meta
+                  (string-match "\\`\\(.*\n.*\\)\n.*" meta))
+         (setq meta (match-string 1 meta)))
+       meta))
     ;; annotation <candidate> => short docstring for completion buffer
     (`annotation
      (elpy-company--cache-annotation arg))
     ;; doc-buffer <candidate> => put doc buffer in `company-doc-buffer'
     (`doc-buffer
-     (let ((doc (elpy-company--cache-docstring arg)))
+     (let* ((name (elpy-company--cache-name arg))
+            (doc (elpy-rpc-get-completion-docstring name)))
        (when doc
          (company-doc-buffer doc))))
     ;; require-match => Never require a match, even if the user
     ;; started to interact with company. See `company-require-match'.
     (`require-match
      'never)
-    ;; location <candidate> => (buffer . point) or (file . line-number)
+    ;; location <candidate> => (buffer . point) or (file .
+    ;; line-number)
+    (`location
+     (let* ((name (elpy-company--cache-name arg))
+            (loc (elpy-rpc-get-completion-location name)))
+       (when loc
+         (cons (car loc)
+               (cadr loc)))))
     ;; match <candidate> => for non-prefix based backends
     ;; post-completion <candidate> => after insertion, for snippets
     ))
@@ -2891,34 +3020,46 @@ description."
 ;;; Backwards compatibility
 
 ;; Functions for Emacs 24 before 24.3
-(when (not (fboundp 'python-shell-send-string))
-  (defalias 'python-shell-send-string 'python-send-string))
-(when (not (fboundp 'python-shell-send-buffer))
-  (defun python-shell-send-buffer (&optional arg)
-    (python-send-buffer)))
 (when (not (fboundp 'python-info-current-defun))
   (defalias 'python-info-current-defun 'python-current-defun))
+
 (when (not (fboundp 'python-nav-forward-statement))
   (defun python-nav-forward-statement (&rest ignored)
     "Function added in Emacs 24.3"
     (error "Enhanced Python navigation only available in Emacs 24.3+")))
 
-(when (not (fboundp 'python-shell-get-process-name))
-  (defun python-shell-get-process-name (dedicated)
-    "Compatibility function for older Emacsen."
-    "Python"))
-(when (not (fboundp 'python-shell-parse-command))
-  (defun python-shell-parse-command ()
-    "Compatibility function for older Emacsen."
-    python-python-command))
-(when (not (fboundp 'python-shell-calculate-process-environment))
-  (defun python-shell-calculate-process-environment ()
-    "Compatibility function for older Emacsen."
-    process-environment))
+(when (not (fboundp 'python-nav-backward-up-list))
+  (defun python-nav-backward-up-list ()
+    "Compatibility function for older Emacsen"
+    (ignore-errors
+      (backward-up-list))))
+
 (when (not (fboundp 'python-shell-calculate-exec-path))
   (defun python-shell-calculate-exec-path ()
     "Compatibility function for older Emacsen."
     exec-path))
+
+(when (not (fboundp 'python-shell-calculate-process-environment))
+  (defun python-shell-calculate-process-environment ()
+    "Compatibility function for older Emacsen."
+    process-environment))
+
+(when (not (fboundp 'python-shell-get-process-name))
+  (defun python-shell-get-process-name (dedicated)
+    "Compatibility function for older Emacsen."
+    "Python"))
+
+(when (not (fboundp 'python-shell-parse-command))
+  (defun python-shell-parse-command ()
+    "Compatibility function for older Emacsen."
+    python-python-command))
+
+(when (not (fboundp 'python-shell-send-buffer))
+  (defun python-shell-send-buffer (&optional arg)
+    (python-send-buffer)))
+
+(when (not (fboundp 'python-shell-send-string))
+  (defalias 'python-shell-send-string 'python-send-string))
 
 ;; Emacs 24.2 made `locate-dominating-file' accept a predicate instead
 ;; of a string. Simply overwrite the current one, it's
