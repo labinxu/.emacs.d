@@ -2,7 +2,6 @@
 (global-set-key (kbd "C-x C-m") 'smex)
 (global-set-key (kbd "C-c C-m") 'execute-extended-command)
 (global-set-key (kbd "C-c SPC") 'ace-jump-mode)
-(global-set-key (kbd "C-c f") 'anything)
 
 (require 'recent-jump)
 (recent-jump-mode t)
