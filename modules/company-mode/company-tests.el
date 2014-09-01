@@ -30,6 +30,9 @@
 (require 'company-keywords)
 (require 'company-clang)
 
+(defun company--column (&optional pos)
+  (car (company--col-row pos)))
+
 ;;; Core
 
 (ert-deftest company-sorted-keywords ()
@@ -199,6 +202,7 @@
     (insert "ab")
     (company-mode)
     (let (company-frontends
+          (company-minimum-prefix-length 2)
           (company-require-match 'company-explicit-action-p)
           (company-backends
            (list (lambda (command &optional arg)
@@ -207,9 +211,33 @@
                      (candidates '("abc" "abd")))))))
       (company-idle-begin (current-buffer) (selected-window)
                           (buffer-chars-modified-tick) (point))
+      (should (eq 2 company-candidates-length))
       (let ((last-command-event ?e))
         (company-call 'self-insert-command 1))
       (should (eq nil company-candidates-length))
+      (should (eq 4 (point))))))
+
+(ert-deftest company-dont-require-match-if-old-prefix-ended-and-was-a-match ()
+  (with-temp-buffer
+    (insert "ab")
+    (company-mode)
+    (let (company-frontends
+          (company-require-match 'company-explicit-action-p)
+          (company-backends
+           (list (lambda (command &optional arg)
+                   (cl-case command
+                     (prefix (company-grab-word))
+                     (candidates '("abc" "ab" "abd"))
+                     (sorted t))))))
+      (let (this-command)
+        (company-complete))
+      (let ((last-command-event ?e))
+        (company-call 'self-insert-command 1))
+      (should (eq 3 company-candidates-length))
+      (should (eq 3 (point)))
+      (let ((last-command-event ? ))
+        (company-call 'self-insert-command 1))
+      (should (null company-candidates-length))
       (should (eq 4 (point))))))
 
 (ert-deftest company-should-complete-whitelist ()
@@ -281,6 +309,7 @@
     (let (company-frontends
           (company-auto-complete 'company-explicit-action-p)
           (company-auto-complete-chars '(? ))
+          (company-minimum-prefix-length 2)
           (company-backends
            (list (lambda (command &optional arg)
                    (cl-case command
@@ -389,8 +418,26 @@
         ;; FIXME: Make it 2?
         (should (eq (overlay-get ov 'company-height) company-tooltip-limit))
         (should (eq (overlay-get ov 'company-column) col))
-        (should (string= (overlay-get ov 'company-after)
+        (should (string= (overlay-get ov 'company-display)
                          "  123 \nc 45  c\nddd\n")))))))
+
+(ert-deftest company-pseudo-tooltip-edit-updates-width ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (set-window-buffer nil (current-buffer))
+    (let ((company-candidates-length 5)
+          (company-candidates '("123" "45" "67" "89" "1011"))
+          (company-backend 'ignore)
+          (company-tooltip-limit 4)
+          (company-tooltip-offset-display 'scrollbar))
+      (company-pseudo-tooltip-show (company--row)
+                                   (company--column)
+                                   0)
+      (should (eq (overlay-get company-pseudo-tooltip-overlay 'company-width)
+                  6))
+      (company-pseudo-tooltip-edit 4)
+      (should (eq (overlay-get company-pseudo-tooltip-overlay 'company-width)
+                  7)))))
 
 (ert-deftest company-preview-show-with-annotations ()
   :tags '(interactive)
@@ -417,11 +464,11 @@
                                  (cdr (assoc arg '(("123" . "(4)")))))))
             (company-candidates '("123" "45"))
             company-tooltip-align-annotations)
-        (company-pseudo-tooltip-show-at-point (point))
+        (company-pseudo-tooltip-show-at-point (point) 0)
         (let ((ov company-pseudo-tooltip-overlay))
           ;; With margins.
           (should (eq (overlay-get ov 'company-width) 8))
-          (should (string= (overlay-get ov 'company-after)
+          (should (string= (overlay-get ov 'company-display)
                            " 123(4) \n 45     \n")))))))
 
 (ert-deftest company-pseudo-tooltip-show-with-annotations-right-aligned ()
@@ -438,11 +485,11 @@
                                                    ("67" . "(891011)")))))))
             (company-candidates '("123" "45" "67"))
             (company-tooltip-align-annotations t))
-        (company-pseudo-tooltip-show-at-point (point))
+        (company-pseudo-tooltip-show-at-point (point) 0)
         (let ((ov company-pseudo-tooltip-overlay))
           ;; With margins.
           (should (eq (overlay-get ov 'company-width) 13))
-          (should (string= (overlay-get ov 'company-after)
+          (should (string= (overlay-get ov 'company-display)
                            " 123     (4) \n 45          \n 67 (891011) \n")))))))
 
 (ert-deftest company-create-lines-shows-numbers ()
@@ -478,24 +525,66 @@
                            (format " %s " (make-string (- ww 2) ?4)))
                      (company--create-lines 0 999))))))
 
+(ert-deftest company-create-lines-truncates-common-part ()
+  (let* ((ww (company--window-width))
+         (company-candidates-length 2)
+         (company-tooltip-margin 1)
+         (company-backend #'ignore))
+    (let* ((company-common (make-string (- ww 3) ?1))
+           (company-candidates `(,(concat company-common "2")
+                                 ,(concat company-common "3"))))
+      (should (equal (list (format " %s2 " (make-string (- ww 3) ?1))
+                           (format " %s3 " (make-string (- ww 3) ?1)))
+                     (company--create-lines 0 999))))
+    (let* ((company-common (make-string (- ww 2) ?1))
+           (company-candidates `(,(concat company-common "2")
+                                 ,(concat company-common "3"))))
+      (should (equal (list (format " %s " company-common)
+                           (format " %s " company-common))
+                     (company--create-lines 0 999))))
+    (let* ((company-common (make-string ww ?1))
+           (company-candidates `(,(concat company-common "2")
+                                 ,(concat company-common "3")))
+           (res (company--create-lines 0 999)))
+      (should (equal (list (format " %s " (make-string (- ww 2) ?1))
+                           (format " %s " (make-string (- ww 2) ?1)))
+                     res))
+      (should (eq 'company-tooltip-common-selection
+                    (get-text-property (- ww 2) 'face
+                                       (car res))))
+      (should (eq 'company-tooltip-selection
+                  (get-text-property (1- ww) 'face
+                                     (car res))))
+
+)))
+
 (ert-deftest company-column-with-composition ()
+  :tags '(interactive)
   (with-temp-buffer
-    (insert "lambda ()")
-    (compose-region 1 (1+ (length "lambda")) "\\")
-    (should (= (company--column) 4))))
+    (save-window-excursion
+      (set-window-buffer nil (current-buffer))
+      (insert "lambda ()")
+      (compose-region 1 (1+ (length "lambda")) "\\")
+      (should (= (company--column) 4)))))
 
 (ert-deftest company-column-with-line-prefix ()
+  :tags '(interactive)
   (with-temp-buffer
-    (insert "foo")
-    (put-text-property (point-min) (point) 'line-prefix "  ")
-    (should (= (company--column) 5))))
+    (save-window-excursion
+      (set-window-buffer nil (current-buffer))
+      (insert "foo")
+      (put-text-property (point-min) (point) 'line-prefix "  ")
+      (should (= (company--column) 5)))))
 
-(ert-deftest company-column-wth-line-prefix-on-empty-line ()
+(ert-deftest company-column-with-line-prefix-on-empty-line ()
+  :tags '(interactive)
   (with-temp-buffer
-    (insert "\n")
-    (forward-char -1)
-    (put-text-property (point-min) (point-max) 'line-prefix "  ")
-    (should (= (company--column) 2))))
+    (save-window-excursion
+      (set-window-buffer nil (current-buffer))
+      (insert "\n")
+      (forward-char -1)
+      (put-text-property (point-min) (point-max) 'line-prefix "  ")
+      (should (= (company--column) 2)))))
 
 (ert-deftest company-plainify ()
   (let ((tab-width 8))
@@ -507,6 +596,22 @@
   (should (equal-including-properties
            (company-plainify (propertize "foobar" 'line-prefix "-*-"))
            "-*-foobar")))
+
+(ert-deftest company-buffer-lines-with-lines-folded ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (insert (propertize "aaa\nbbb\nccc\nddd\n" 'display "aaa+\n"))
+    (insert "eee\nfff\nggg")
+    (should (equal (company-buffer-lines (point-min) (point-max))
+                   '("aaa" "eee" "fff" "ggg")))))
+
+(ert-deftest company-buffer-lines-with-multiline-display ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (insert (propertize "a" 'display "bbb\nccc\ndddd\n"))
+    (insert "eee\nfff\nggg")
+    (should (equal (company-buffer-lines (point-min) (point-max))
+                   '("" "" "" "eee" "fff" "ggg")))))
 
 (ert-deftest company-modify-line ()
   (let ((str "-*-foobar"))
@@ -669,6 +774,44 @@
                      (company-call-backend 'candidates "foo")))
       (let ((company-backend (list immediate)))
         (should (equal '("f") (company-call-backend 'candidates "foo")))))))
+
+;;; Transformers
+
+(ert-deftest company-occurrence-prefer-closest-above ()
+  (with-temp-buffer
+    (save-window-excursion
+      (set-window-buffer nil (current-buffer))
+      (insert "foo0
+foo1
+")
+      (save-excursion
+        (insert "
+foo3
+foo2"))
+      (let ((company-backend 'company-dabbrev)
+            (company-occurrence-weight-function
+             'company-occurrence-prefer-closest-above))
+        (should (equal '("foo1" "foo0" "foo3" "foo2" "foo4")
+                       (company-sort-by-occurrence
+                        '("foo0" "foo1" "foo2" "foo3" "foo4"))))))))
+
+(ert-deftest company-occurrence-prefer-any-closest ()
+  (with-temp-buffer
+    (save-window-excursion
+      (set-window-buffer nil (current-buffer))
+      (insert "foo0
+foo1
+")
+      (save-excursion
+        (insert "
+foo3
+foo2"))
+      (let ((company-backend 'company-dabbrev)
+            (company-occurrence-weight-function
+             'company-occurrence-prefer-any-closest))
+        (should (equal '("foo1" "foo3" "foo0" "foo2" "foo4")
+                       (company-sort-by-occurrence
+                        '("foo0" "foo1" "foo2" "foo3" "foo4"))))))))
 
 ;;; Template
 
