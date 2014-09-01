@@ -3,3 +3,5 @@
 ;;(provide 'anything-conf)
 (require 'helm-config)
 (helm-mode 1)
+(require 'projectile)
+(add-hook 'python-mode-hook 'projectile-mode)

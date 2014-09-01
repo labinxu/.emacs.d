@@ -2,6 +2,29 @@
 
 ## Next
 
+* `company-begin-commands` includes several `cc-mode` commands.
+
+## 2014-08-27 (0.8.3)
+
+* On Emacs 24.4 or newer, tooltip positioning takes line-spacing into account.
+* New face `company-tooltip-search`, used for the search string in the tooltip.
+* The default value of `company-dabbrev-minimum-length` is set to 4, independent
+  of the `company-minimum-prefix-length` value.
+
+## 2014-07-26 (0.8.2)
+
+* New user option `company-occurrence-weight-function`, allowing to tweak the
+  behavior of the transformer `company-sort-by-occurrence`.
+* Setting `company-idle-delay` to `t` is deprecated. Use the value 0 instead.
+
+## 2014-07-01 (0.8.1)
+
+* `company-require-match` is not in effect when the new input doesn't continue
+  the previous prefix, and that prefix was a match.
+* The meaning of `company-begin-commands` value t has slightly changed.
+* New transformer, `company-sort-by-backend-importance`.
+* When grouped back-ends are used, the back-end of the current candidate is
+  indicated in the mode-line, enclosed in angle brackets.
 * New user option `company-gtags-insert-arguments`, t by default.
 * `company-css` knows about CSS3.
 * `company-gtags` supports `meta` and `annotation`.
