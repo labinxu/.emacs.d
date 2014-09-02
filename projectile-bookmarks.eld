@@ -1,1 +1,1 @@
-("~/code/")
+("~/code/web_crawler/" "~/code/")
