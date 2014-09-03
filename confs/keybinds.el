@@ -46,4 +46,4 @@
 ;;;;;;;;;;;;;;;;;;helm;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (global-set-key (kbd "C-c h") 'helm-mini)
 (global-set-key (kbd "C-c s") 'sr-speedbar-toggle)
-(global-set-key (kbd "C-c C-j") 'helm-imenu)
+(global-set-key (kbd "C-c j") 'helm-imenu)
