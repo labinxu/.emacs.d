@@ -60,3 +60,5 @@
   (interactive)
   (cycle-font -1))
  ;;;To get a list of fonts in emacs, use (print (font-family-list))
+
+(require 'sr-speedbar)

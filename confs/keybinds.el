@@ -45,3 +45,5 @@
 (global-set-key [f11] 'neotree-toggle) 
 ;;;;;;;;;;;;;;;;;;helm;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (global-set-key (kbd "C-c h") 'helm-mini)
+(global-set-key (kbd "C-c s") 'sr-speedbar-toggle)
+(global-set-key (kbd "C-c C-j") 'helm-imenu)
