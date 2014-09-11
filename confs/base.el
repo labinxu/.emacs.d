@@ -134,10 +134,4 @@ Subsequent calls expands the selection to larger semantic unit."
              char)
     (search-backward (string char) nil nil n))
   (setq unread-command-events (list last-input-event)))
-  
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;browse the kill history
-(defadvice yank-pop (around anything-kill-ring-maybe activate)
-(if (not (eq last-command 'yank))
-       (anything-show-kill-ring)
-   ad-do-it))
+
