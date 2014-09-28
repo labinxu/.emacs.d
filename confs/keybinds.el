@@ -30,6 +30,9 @@
 
 (define-key search-map "f" 'goto-char-forward)
 (define-key search-map "b" 'goto-char-backward)
+(define-key search-map "p" 'projectile-find-file)
+(define-key search-map "s" 'projectile-switch-to-buffer)
+
 
 ;;windows and buffer
 (global-set-key [(control shift up)] 'enlarge-window)
