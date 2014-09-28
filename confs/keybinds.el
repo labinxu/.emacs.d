@@ -1,6 +1,4 @@
 ;; -*- coding: utf-8 -*-
-(global-set-key (kbd "C-x C-m") 'smex)
-(global-set-key (kbd "C-c C-m") 'execute-extended-command)
 (global-set-key (kbd "C-c SPC") 'ace-jump-mode)
 (global-set-key (kbd "C-c \\") 'comment-indent) ;
 (require 'recent-jump)

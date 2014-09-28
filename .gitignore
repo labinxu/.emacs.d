@@ -6,3 +6,5 @@ projectile-bookmarks.eld
 auto-save-list/*
 auto-save-list
 *.lock
+url/
+resource/

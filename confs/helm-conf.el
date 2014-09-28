@@ -1,15 +1,5 @@
 ;; -*- coding: utf-8 -*-
 (require 'helm-config)
-;;(helm-mode 1)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;browse the kill history
-(defadvice yank-pop (around anything-kill-ring-maybe activate)
-(if (not (eq last-command 'yank))
-       (helm-show-kill-ring)
-   ad-do-it))
-   
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'helm-config)
 (require 'helm-command)
 (require 'helm-elisp)
 (require 'helm-misc)
@@ -81,7 +71,7 @@ helm-source-buffer-not-found
 (remove-if 'file-directory-p files))))
 )
 (when (require 'helm-projectile)
-(global-set-key (kbd "C-c C-p") 'helm-projectile)
+(global-set-key (kbd "C-c f") 'helm-projectile)
 )
 ;; helm-c-yasnippet.el
 (when (require 'helm-c-yasnippet nil t)
