@@ -1,2 +1,2 @@
 (require 'drag-stuff)
-(drag-stuff-mode t)
+(drag-stuff-global-mode)

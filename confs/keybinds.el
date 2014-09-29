@@ -45,5 +45,5 @@
 ;;;;for neotree
 (global-set-key [f11] 'neotree-toggle) 
 ;;;;;;;;;;;;;;;;;;helm;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(global-set-key (kbd "C-c h") 'helm-mini)
 (global-set-key (kbd "C-c j") 'helm-imenu)
+(global-set-key (kbd "C-c s") 'helm-ag)
