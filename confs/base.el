@@ -149,3 +149,7 @@ Subsequent calls expands the selection to larger semantic unit."
     (search-backward (string char) nil nil n))
   (setq unread-command-events (list last-input-event)))
 
+ (defun current-file-name-nondirectory()
+  (file-name-sans-extension (file-name-nondirectory (buffer-file-name)))
+  )
+(provide 'base)

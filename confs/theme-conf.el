@@ -1,4 +1,5 @@
-(load-theme 'solarized-dark t)
+;;(load-theme 'solarized-dark t)
+(load-theme 'monokai t)
 (setq alpha-list '((95 95) (100 100)))
 (defun loop-alpha()
 (interactive)
