@@ -23,8 +23,8 @@
 (global-set-key (kbd "C-c c") 'copy-symbol-at-point)
 (global-set-key (kbd "C-c x") 'cut-symbol-at-point)
 
-(define-key search-map "s" 'extend-selection);;M-s s
-(define-key search-map "o" 'occur-at-point);;M-s O
+(global-set-key "C-c f" 'extend-selection);;M-s s
+(global-set-key "C-c o" 'occur-at-point);;M-s O
 
 (define-key search-map "f" 'goto-char-forward)
 (define-key search-map "b" 'goto-char-backward)
