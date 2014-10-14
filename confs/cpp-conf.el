@@ -4,6 +4,26 @@
 (add-hook 'c-mode-common-hook 'google-set-c-style)
 (require 'company)
 (add-hook 'after-init-hook 'global-company-mode)
+(setq company-idle-delay 0.2)
+(setq company-minimum-prefix-length 2)
+(setq company-begin-commands '(self-insert-command)) 
+(dolist (hook (list
+               'emacs-lisp-mode-hook
+               'lisp-mode-hook
+               'lisp-interaction-mode-hook
+               'scheme-mode-hook
+               'c-mode-hook
+               'c++-mode-hook
+               'java-mode-hook
+               'haskell-mode-hook
+               'asm-mode-hook
+               'emms-tag-editor-mode-hook
+               'sh-mode-hook
+               'org-mode
+               'python-mode
+               ))
+  (add-hook hook 'company-mode))
+  
 (global-set-key (kbd "<f5>") 'compile_and_run)
 (global-set-key (kbd "<f7>") 'smart-compile) 
 (defun compile_and_run()

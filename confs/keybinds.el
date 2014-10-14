@@ -22,7 +22,7 @@
 (global-set-key (kbd "C-=") 'er/expand-region)
 (global-set-key (kbd "C-c c") 'copy-symbol-at-point)
 (global-set-key (kbd "C-c x") 'cut-symbol-at-point)
-
+(global-set-key (kbd "C-c a") 'company-complete)
 (global-set-key (kbd "C-c m") 'extend-selection);;M-s s
 (global-set-key (kbd "C-c o") 'occur-at-point);;M-s O
 
