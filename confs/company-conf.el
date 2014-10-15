@@ -25,4 +25,6 @@
 ;;; To retrieve completion candidates for your proreate a file named .dir-locals.el at your project root:
 ;;;((nil . ((company-clang-arguments . ("-I/home/<user>/project_root/include1/"
 ;;;;                                     "-I/home/<user>/project_root/include2/")))))
+
+(require 'company-c-headers)
 (add-to-list 'company-backends 'company-c-headers)

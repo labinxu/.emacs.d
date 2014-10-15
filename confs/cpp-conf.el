@@ -5,7 +5,6 @@
 (global-set-key (kbd "<f7>") 'smart-compile) 
 ;; set appearance of a tab that is represented by 4 spaces
 (setq-default tab-width 4)
-
 (defun compile_and_run()
   (interactive)
   (progn

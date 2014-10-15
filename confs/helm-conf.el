@@ -126,3 +126,5 @@ helm-source-buffer-not-found
 (define-key helm-map (kbd "C-n") 'helm-next-line)
 (define-key helm-map (kbd "C-M-n") 'helm-next-source)
 (define-key helm-map (kbd "C-M-p") 'helm-previous-source)
+(define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
+(global-set-key (kbd "C-c h o") 'helm-occur)
