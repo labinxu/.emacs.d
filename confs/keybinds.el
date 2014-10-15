@@ -30,7 +30,12 @@
 (define-key search-map "b" 'goto-char-backward)
 (define-key search-map "p" 'projectile-find-file)
 (define-key search-map "s" 'projectile-switch-to-buffer)
-
+(global-set-key (kbd "C-c w") 'whitespace-mode)
+;; show unncessary whitespace that can mess up your diff
+(add-hook 'prog-mode-hook
+    (lambda () (interactive) (setq show-trailing-whitespace 1)))
+;; use space to indent by default
+(setq-default indent-tabs-mode nil)
 
 ;;windows and buffer
 (global-set-key [(control shift up)] 'enlarge-window)

@@ -1,31 +1,11 @@
 (require 'base)
 (require 'google-c-style)
-
-(add-hook 'c-mode-common-hook 'google-set-c-style)
-(require 'company)
-(add-hook 'after-init-hook 'global-company-mode)
-(setq company-idle-delay 0.2)
-(setq company-minimum-prefix-length 2)
-(setq company-begin-commands '(self-insert-command)) 
-(dolist (hook (list
-               'emacs-lisp-mode-hook
-               'lisp-mode-hook
-               'lisp-interaction-mode-hook
-               'scheme-mode-hook
-               'c-mode-hook
-               'c++-mode-hook
-               'java-mode-hook
-               'haskell-mode-hook
-               'asm-mode-hook
-               'emms-tag-editor-mode-hook
-               'sh-mode-hook
-               'org-mode
-               'python-mode
-               ))
-  (add-hook hook 'company-mode))
-  
+(add-hook 'c++-mode-hook 'google-set-c-style)
 (global-set-key (kbd "<f5>") 'compile_and_run)
-(global-set-key (kbd "<f7>") 'smart-compile) 
+(global-set-key (kbd "<f7>") 'smart-compile) 
+;; set appearance of a tab that is represented by 4 spaces
+(setq-default tab-width 4)
+
 (defun compile_and_run()
   (interactive)
   (progn
@@ -66,4 +46,12 @@
     (if (not (null command))
         (let ((command (read-from-minibuffer "Compile command: " command))) 
           (compile command)))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
+(setq
+ ;; use gdb-many-windows by default
+ gdb-many-windows t
+ ;; Non-nil means display source file containing the main routine at startup
+ gdb-show-main t
+ )
