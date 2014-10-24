@@ -1,11 +1,7 @@
-*.desktop
-*.session
-*.cache
-*.eld
-projectile-bookmarks.eld
-auto-save-list/*
-auto-save-list
-*.lock
-url/
-resource/
+auto-save-list/
 eshell/
+.projectile
+notes.el
+projectile.cache
+projectile-bookmarks.eld
+resource/

@@ -1,7 +1,17 @@
 (require 'company)
 (setq company-backends (delete 'company-semantic company-backends))
+(require 'company-irony)
+(eval-after-load 'company
+  '(add-to-list 'company-backends 'company-irony))
+
+;; (optional) adds CC special commands to `company-begin-commands' in order to
+;; trigger completion at interesting places, such as after scope operator
+;;     std::|
+(add-hook 'irony-mode-hook 'company-irony-setup-begin-commands)
 
 (add-hook 'after-init-hook 'global-company-mode)
+
+
 (setq company-idle-delay 0.2)
 (setq company-minimum-prefix-length 2)
 (setq company-begin-commands '(self-insert-command))
@@ -28,3 +38,6 @@
 
 (require 'company-c-headers)
 (add-to-list 'company-backends 'company-c-headers)
+(add-to-list 'company-c-headers-path-system "C:/MinGW/include")
+(add-to-list 'company-c-headers-path-system "C:/MinGW/msys/1.0/include")
+(add-to-list 'company-c-headers-path-system "C:/MinGW/lib/gcc/mingw32/4.8.1/include/c++")
