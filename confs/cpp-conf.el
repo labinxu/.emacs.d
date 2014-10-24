@@ -54,3 +54,28 @@
  ;; Non-nil means display source file containing the main routine at startup
  gdb-show-main t
  )
+ 
+(defvar wcy-c/c++-hightligh-included-files-key-map nil)
+(if wcy-c/c++-hightligh-included-files-key-map
+    nil
+  (setq wcy-c/c++-hightligh-included-files-key-map (make-sparse-keymap))
+  (define-key wcy-c/c++-hightligh-included-files-key-map (kbd "<RET>") 'find-file-at-point))
+ 
+(defun wcy-c/c++-hightligh-included-files ()
+  (interactive)
+  (when (or (eq major-mode 'c-mode)
+            (eq major-mode 'c++-mode))
+    (save-excursion
+      (goto-char (point-min))
+      ;; remove all overlay first
+      (mapc (lambda (ov) (if (overlay-get ov 'wcy-c/c++-hightligh-included-files)
+                             (delete-overlay ov)))
+            (overlays-in (point-min) (point-max)))
+      (while (re-search-forward "^#include[ \t]+[\"<]\\(.*\\)[\">]" nil t nil)
+        (let* ((begin  (match-beginning 1))
+               (end (match-end 1))
+               (ov (make-overlay begin end)))
+          (overlay-put ov 'wcy-c/c++-hightligh-included-files t)
+          (overlay-put ov 'keymap wcy-c/c++-hightligh-included-files-key-map)
+          (overlay-put ov 'face 'underline))))))
+;; 这不是一个好办法，也可以把它加载到 c-mode-hook or c++-mode-hook 中。
