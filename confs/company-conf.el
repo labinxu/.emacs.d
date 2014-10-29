@@ -41,3 +41,4 @@
 (add-to-list 'company-c-headers-path-system "C:/MinGW/include")
 (add-to-list 'company-c-headers-path-system "C:/MinGW/msys/1.0/include")
 (add-to-list 'company-c-headers-path-system "C:/MinGW/lib/gcc/mingw32/4.8.1/include/c++")
+(add-to-list 'company-c-headers-path-system ".")

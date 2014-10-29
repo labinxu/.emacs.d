@@ -24,6 +24,7 @@ manually as a project just create an empty `.projectile` file in
 it. Some of Projectile's features:
 
 * jump to a file in project
+* jump to files at point in project
 * jump to a directory in project
 * jump to a file in a directory
 * jump to a project buffer
@@ -53,14 +54,14 @@ The recommended way to install Projectile is via `package.el`.
 #### MELPA
 
 You can install a snapshot version of Projectile from the
-[MELPA](http://melpa.milkbox.net) repository. The version of
+[MELPA](http://melpa.org) repository. The version of
 Projectile there will always be up-to-date, but it might be unstable
 (albeit rarely).
 
 #### MELPA Stable
 
 You can install the last stable version of Projectile from the
-[MELPA Stable](http://melpa-stable.milkbox.net) repository.
+[MELPA Stable](http://stable.melpa.org) repository.
 
 ### el-get
 
@@ -104,11 +105,21 @@ project.
 
 Since the native indexing mode is much slower, by default the second
 method is used on all operating systems except Windows. To force the
-use of native indexing:
+use of native indexing in operating systems other than Windows:
 
 ```el
 (setq projectile-indexing-method 'native)
 ```
+
+To force the use of external indexing in Windows:
+
+```el
+(setq projectile-indexing-method 'alien)
+```
+
+This can speed up Projectile in Windows significantly. The disadvantage of this 
+method is that it's not well supported on Windows systems. If there's problem,
+you can always use native indexing mode.
 
 #### Caching
 
@@ -197,7 +208,40 @@ may prefer to alter the value of `projectile-switch-project-action`:
 
 This is the default.  With this setting, once you have selected your
 project via Projectile's completion system (see below), you will
-remain in the completion system to select a file to visit.
+remain in the completion system to select a file to visit. `projectile-find-file`
+is capable of retrieving files in all sub-projects under the project root,
+such as Git submodules. Currently, only Git is supported. Support for other VCS
+will be added in the future.
+
+###### `projectile-find-file-in-known-projects`
+
+Similar to `projectile-find-file` but lists all files in all known projects. Since
+the total number of fils could be huge, it is beneficial to enable caching for subsequent
+usages.
+
+###### `projectile-find-file-dwim`
+
+If point is on a filepath, Projectile first tries to search for that
+file in project:
+
+- If it finds just a file, it switches to that file instantly.  This
+works even if the filename is incomplete, but there's only a single file
+in the current project that matches the filename at point. For example,
+if there's only a single file named "projectile/projectile.el" but the
+current filename is "projectile/proj" (incomplete), projectile-find-file
+still switches to "projectile/projectile.el" immediately because this
+is the only filename that matches.
+
+- If it finds a list of files, the list is displayed for selecting. A
+list of files is displayed when a filename appears more than one in the
+project or the filename at point is a prefix of more than two files in a
+project. For example, if `projectile-find-file' is executed on a
+filepath like "projectile/", it lists the content of that directory.
+If it is executed on a partial filename like "projectile/a", a list of
+files with character 'a' in that directory is presented.
+
+- If it finds nothing, display a list of all files in project for
+  selecting.
 
 ###### `projectile-dired`
 
@@ -296,7 +340,9 @@ Keybinding         | Description
 -------------------|------------------------------------------------------------
 <kbd>C-c p f</kbd> | Display a list of all files in the project. With a prefix argument it will clear the cache first.
 <kbd>C-c p F</kbd> | Display a list of all files in all known projects.
+<kbd>C-c p g</kbd> | Display a list of all files at point in the project. With a prefix argument it will clear the cache first.
 <kbd>C-c p 4 f</kbd> | Jump to a project's file using completion and show it in another window.
+<kbd>C-c p 4 g</kbd> | Jump to a project's file based on context at point and show it in another window.
 <kbd>C-c p d</kbd> | Display a list of all directories in the project. With a prefix argument it will clear the cache first.
 <kbd>C-c p 4 d</kbd> | Switch to a project directory and show it in another window.
 <kbd>C-c p 4 a</kbd> | Switch between files with the same name but different extensions in other window.
@@ -525,11 +571,7 @@ for calling Helm with the Projectile file source. You can call it like this:
 M-x helm-projectile
 ```
 
-or even better - bind it to a keybinding like this:
-
-```el
-(global-set-key (kbd "C-c h") 'helm-projectile)
-```
+or even better - invoke the key binding <kbd>C-c p h</kbd>.
 
 For those who prefer helm to ido, the command `helm-projectile-switch-project`
 can be used to replace `projectile-switch-project` to switch project. Please
@@ -538,10 +580,52 @@ to `helm`, which just enables projectile to use the Helm completion to complete
 a project name. The benefit of using `helm-projectile-switch-project` is that on
 any selected project we can fire many actions, not limited to just the "switch
 to project" action, as in the case of using helm completion by setting
-`projectile-completion-system` to `helm`. Currently only four actions have been
-provided, these are "Switch to project", "Open Dired in project's directory",
-"Open project root in vc-dir or magit" and "Switch to Eshell", but we will
-definitely add more in the future.
+`projectile-completion-system` to `helm`. Currently, there are five actions:
+"Switch to project", "Open Dired in project's directory", "Open project root in
+vc-dir or magit", "Switch to Eshell" and "Grep project files". We will add more
+and more actions in the future.
+
+`helm-projectile` is capable of opening multiple files by marking the files with
+<kbd>C-SPC</kbd> or mark all files with <kdb>M-a</kbd>. Then, press <kdb>RET</kbd>,
+all the selected files will be opened.
+
+Note that the helm grep is different from `projectile-grep` because the helm
+grep is incremental. To use it, select your projects (select multiple projects
+by pressing C-SPC), press "C-s" (or "C-u C-s" for recursive grep), and type your
+regexp. As you type the regexp in the mini buffer, the live grep results are
+displayed incrementally.
+
+`helm-projectile` also provides Helm versions of common Projectile commands. Currently,
+these are the supported commands:
+
+* `helm-projectile-switch-project`
+* `helm-projectile-find-file`
+* `helm-projectile-find-file-in-known-projects`
+* `helm-projectile-find-file-dwim`
+* `helm-projectile-find-dir`
+* `helm-projectile-recentf`
+* `helm-projectile-switch-to-buffer`
+
+Why should you use these commands compared with the normal Projectile commands, even
+if the normal commands use `helm` as `projectile-completion-system`? The answer is,
+Helm specific commands give more useful features. For example, `helm-projectile-switch-project`
+allows opening a project in Dired, Magit or Eshell. `helm-projectile-find-file` reuses actions in
+`helm-find-files` (which is plenty) and able to open multiple files. Another reason is that in a large
+source tree, helm-projectile could be slow because it has to open all available sources.
+
+If you want to use these commands, you have to activate it to replace the normal Projectile
+commands:
+
+```lisp
+(require 'helm-projectile)
+(helm-projectile-on)
+```
+
+If you already activate helm-projectile key bindings and you don't like it, you can turn it off
+and use the normal Projectile bindings with command `helm-projectile-off`.
+
+To fully learn Helm Projectile and see what it is capable of, you should refer to this guide:
+[Exploring large projects with Projectile and Helm Projectile](http://tuhdo.github.io/helm-projectile.html).
 
 Obviously you need to have Helm installed for this to work :-)
 

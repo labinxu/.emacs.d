@@ -4,6 +4,16 @@
 
 ### New features
 
+* Add a new Helm command: `helm-projectile-find-file-in-known-projects` that opens all files in all known projects.
+* Add an action for `helm-projectile-switch-project` to delete multiple marked projects.
+* Add the ability to retrieve files in all sub-projects under a project root.
+* Add `projectile-find-file-dwim` and `helm-projectile-find-file-dwim` commands.
+* Provide actual Helm commands for common Projectile commands.
+* Use existing Helm actions and map in `helm-find-files` that allows `helm-source-projectile-files-list`
+to behave like `helm-find-files`, such as multifile selection and opening or delete on selected files.
+* Add compile action to `helm-projectile`.
+* Allows using Eshell and Magit outside of a project in `helm-projectile`.
+* Add Helm action for incremental grep in the selected projects.
 * Add command projectile-find-other-file  Switch between files with
   the same  name but different extensions.
 * Add Helm interface to switch project. For more details checkout the file
