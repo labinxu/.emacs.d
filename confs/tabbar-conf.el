@@ -1,10 +1,10 @@
 (require 'tabbar)
 ;;tabbar
 (tabbar-mode 1)
-(global-set-key [(meta j)] 'tabbar-backward)
-(global-set-key [(meta k)] 'tabbar-forward)
-(global-set-key [(control meta j)] 'tabbar-backward-group)
-(global-set-key [(control meta k)] 'tabbar-forward-group)
+(global-set-key [(C tab)] 'tabbar-forward)
+(global-set-key [(C S tab)] 'tabbar-backward)
+(global-set-key [(control |)] 'tabbar-backward-group)
+;;(global-set-key [(control S meta |)] 'tabbar-forward-group)
 ;;set group strategy
 (defun tabbar-buffer-groups ()
 "tabbar group"
