@@ -1,23 +1,3 @@
-;;----------------------------------------------------------------------------
-;; Buffer関連
-;;----------------------------------------------------------------------------
-;; バッファ一覧を詳細に
-(global-set-key (kbd "C-x C-b") 'bs-show)
-;; ミニバッファの履歴をC-rでインクリメンタルサーチできるように
-;; http://www.sodan.org/~knagano/emacs/minibuf-isearch/minibuf-isearch.el
-(require 'minibuf-isearch nil t)
-;; i-searchでのbackspace有効
-(define-key isearch-mode-map (kbd "C-h") 'isearch-delete-char)
-;; isearch の終了時のカーソル位置を常に検索語の後ろにする
-;; http://www.bookshelf.jp/soft/meadow_49.html#SEC716
-(define-key isearch-mode-map (kbd "M-m") 'isearch-exit)
-(add-hook 'isearch-mode-end-hook
-(lambda ()
-(cond
-((eq last-input-char ?\C-m)
-(goto-char (match-end 0)))
-((eq last-input-char ?\M-m)
-(goto-char (match-beginning 0))))))
 ;; バッファ移動を一瞬で行う
 ;; http://d.hatena.ne.jp/rubikitch/20111211/smalldisplay
 ;;; last-buffer
@@ -45,8 +25,7 @@
 (switch-to-last-buffer)
 (other-window 1)))
 (global-set-key (kbd "C-t") 'switch-to-last-buffer-or-other-window)
-;; zlc.el
+;; zlc
 ;; http://d.hatena.ne.jp/mooz/20101003/p1
-;; https://github.com/mooz/emacs-zlc/
-(when (require 'zlc nil t)
-(zlc-mode t))
+;;(zlc-mode t)
+(provide 'init-buffer)
