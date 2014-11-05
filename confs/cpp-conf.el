@@ -1,6 +1,22 @@
 (require 'base)
 (require 'google-c-style)
-(add-hook 'c++-mode-hook 'google-set-c-style)
+(add-hook 'c-mode-common-hook 'google-set-c-style)
+(add-hook 'c-mode-common-hook 'font-lock)
+(require 'eassist)
+(defun my-c-mode-common-hook ()
+  (define-key c-mode-base-map (kbd "M-o") 'eassist-switch-h-cpp)
+  (define-key c-mode-base-map (kbd "M-m") 'eassist-list-methods))
+(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
+
+
+(setq auto-mode-alist  
+    (cons '("\\.h$" . c++-mode)  
+     auto-mode-alist)
+)  
+            
+(defun font-lock()
+    (global-font-lock-mode t)
+)
 (global-set-key (kbd "<f5>") 'compile_and_run)
 (global-set-key (kbd "<f7>") 'smart-compile) 
 ;; set appearance of a tab that is represented by 4 spaces

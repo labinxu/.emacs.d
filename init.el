@@ -1,5 +1,4 @@
 (require 'cl)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defconst emacs-base-dir "~/.emacs.d/"
   "The root directory that all the extra plugin will put in")

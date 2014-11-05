@@ -2,7 +2,7 @@
 ;;tabbar
 (tabbar-mode 1)
 (global-set-key [(C tab)] 'tabbar-forward)
-(global-set-key [(C S tab)] 'tabbar-backward)
+(global-set-key [(backtab)] 'tabbar-backward)
 (global-set-key [(control |)] 'tabbar-backward-group)
 ;;(global-set-key [(control S meta |)] 'tabbar-forward-group)
 ;;set group strategy
