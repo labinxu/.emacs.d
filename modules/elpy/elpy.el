@@ -4,9 +4,9 @@
 
 ;; Author: Jorgen Schaefer <contact@jorgenschaefer.de>
 ;; URL: https://github.com/jorgenschaefer/elpy
-;; Version: 1.5.0
+;; Version: 1.6.1
 ;; Keywords: Python, IDE, Languages, Tools
-;; Package-Requires: ((company "0.8.2") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (idomenu "0.1") (pyvenv "1.3") (yasnippet "0.8.0"))
+;; Package-Requires: ((company "0.8.2") (find-file-in-project "3.3")  (highlight-indentation "0.5.0") (pyvenv "1.3") (yasnippet "0.8.0"))
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
@@ -80,7 +80,7 @@
 (require 'elpy-refactor)
 (require 'pyvenv)
 
-(defconst elpy-version "1.5.0"
+(defconst elpy-version "1.6.1"
   "The version of the Elpy lisp code.")
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -164,12 +164,20 @@ can be inidividually enabled or disabled."
 (defcustom elpy-project-root nil
   "The root of the project the current buffer is in.
 
-The value is automatically set for new buffers using
-`elpy-project-root-finder-functions', which see.
+There is normally no use in setting this variable directly, as
+Elpy tries to detect the project root automatically. See
+`elpy-project-root-finder-functions' for a way of influencing
+this.
+
+Setting this variable globally will override Elpy's automatic
+project detection facilities entirely.
 
 Alternatively, you can set this in file- or directory-local
 variables using \\[add-file-local-variable] or
-\\[add-dir-local-variable]."
+\\[add-dir-local-variable].
+
+Do not use this variable in Emacs Lisp programs. Instead, call
+the `elpy-project-root' function. It will do the right thing."
   :type 'directory
   :safe 'file-directory-p
   :group 'elpy)
@@ -305,7 +313,6 @@ message again within this amount of seconds."
     (define-key map (kbd "C-c C-d") 'elpy-doc)
     (define-key map (kbd "C-c C-e") 'elpy-multiedit-python-symbol-at-point)
     (define-key map (kbd "C-c C-f") 'elpy-find-file)
-    (define-key map (kbd "C-c C-j") 'idomenu)
     (define-key map (kbd "C-c C-n") 'elpy-flymake-next-error)
     (define-key map (kbd "C-c C-o") 'elpy-occur-definitions)
     (define-key map (kbd "C-c C-p") 'elpy-flymake-previous-error)
@@ -661,7 +668,7 @@ item in another window.\n\n")
       (elpy-insert--para
        "The Python interpreter could not find the elpy module. "
        "Make sure the module is installed"
-       (if (getenv "virtual_env" config)
+       (if (gethash "virtual_env" config)
            " in the current virtualenv.\n"
          ".\n"))
       (insert "\n")
@@ -1355,7 +1362,7 @@ else:
           "';'.join(__COMPLETER_all_completions('''%s'''))\n"))
    ;; Emacs 24.4
    ((boundp 'python-shell-interpreter-interactive-arg)
-    (setq python-shell-interpreter "python"
+    (setq python-shell-interpreter cpython
           python-shell-interpreter-args "-i"))
    (t
     (error "I don't know how to set ipython settings for this Emacs"))))
@@ -2652,12 +2659,14 @@ This is usually an error or backtrace."
 
 This includes `elpy-rpc-pythonpath' in the PYTHONPATH, if set."
   (if (or (not elpy-rpc-pythonpath)
-          (not (file-exists-p (format "%s/elpy/__init__.py"
-                                      elpy-rpc-pythonpath))))
+          (not (file-exists-p (expand-file-name "elpy/__init__.py"
+                                                elpy-rpc-pythonpath))))
       process-environment
     (let* ((old-pythonpath (getenv "PYTHONPATH"))
            (new-pythonpath (if old-pythonpath
-                               (concat elpy-rpc-pythonpath ":" old-pythonpath)
+                               (concat elpy-rpc-pythonpath
+                                       path-separator
+                                       old-pythonpath)
                              elpy-rpc-pythonpath)))
       (cons (concat "PYTHONPATH=" new-pythonpath)
             process-environment))))
@@ -2947,7 +2956,8 @@ here, and return the \"name\" as used by the backend."
                    (elpy-company--cache-completions arg result))
                   ;; Nothing from the backend, try dabbrev-code.
                   ((> (length arg) company-minimum-prefix-length)
-                   (company-dabbrev-code 'candidates arg))
+                   (elpy--sort-and-strip-duplicates
+                    (company-dabbrev-code 'candidates arg)))
                   ;; Well, ok, let's go meh.
                   (t
                    nil))))))))
@@ -2956,10 +2966,7 @@ here, and return the \"name\" as used by the backend."
      t)
     ;; duplicates => t if there could be duplicates
     (`duplicates
-     ;; While elpy backends won't return duplicates, we are passing
-     ;; this on to `company-dabbrev-code' if we have no completions of
-     ;; our own, so return t just in case.
-     t)
+     nil)
     ;; no-cache <prefix> => t if company shouldn't cache results
     ;; meta <candidate> => short docstring for minibuffer
     (`meta
@@ -2992,6 +2999,12 @@ here, and return the \"name\" as used by the backend."
     ;; match <candidate> => for non-prefix based backends
     ;; post-completion <candidate> => after insertion, for snippets
     ))
+
+(defun elpy--sort-and-strip-duplicates (seq)
+  "Sort SEQ and remove any duplicates."
+  (sort (delete-dups seq)
+        (lambda (a b)
+          (not (string< a b)))))
 
 ;;;;;;;;;;;;;;;;;
 ;;; Module: ElDoc
@@ -3128,13 +3141,14 @@ description."
 
 (defun elpy-flymake-error-at-point ()
   "Return the flymake error at point, or nil if there is none."
-  (let* ((lineno (line-number-at-pos))
-         (err-info (car (flymake-find-err-info flymake-err-info
-                                               lineno))))
-    (when err-info
-      (mapconcat #'flymake-ler-text
-                 err-info
-                 ", "))))
+  (when (boundp 'flymake-err-info)
+    (let* ((lineno (line-number-at-pos))
+           (err-info (car (flymake-find-err-info flymake-err-info
+                                                 lineno))))
+      (when err-info
+        (mapconcat #'flymake-ler-text
+                   err-info
+                   ", ")))))
 
 (defun elpy-flymake--standard-value (var)
   "Return the standard value of the given variable."
