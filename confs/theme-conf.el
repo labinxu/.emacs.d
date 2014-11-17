@@ -1,6 +1,8 @@
 ;;(load-theme 'solarized-dark t)
 (load-theme 'monokai t)
 (setq alpha-list '((95 95) (100 100)))
+;;change the select background color
+(set-face-attribute 'region nil :background "#483d8b")
 (defun loop-alpha()
 (interactive)
 (let ((h (car alpha-list)))
