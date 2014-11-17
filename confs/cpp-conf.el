@@ -7,7 +7,8 @@
   (define-key c-mode-base-map (kbd "M-o") 'eassist-switch-h-cpp)
   (define-key c-mode-base-map (kbd "M-m") 'eassist-list-methods))
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
-
+(require 'ede)
+(global-ede-mode t)
 
 (setq auto-mode-alist  
     (cons '("\\.h$" . c++-mode)  
@@ -29,7 +30,7 @@
     (read-shell-command (concat "./" (current-file-name-nondirectory)))
   )
 )
-(defun smart-compile() 
+(defun smart-compile-for-single-file() 
   (interactive) 
   (let ((candidate-make-file-name '("makefile" "Makefile" "GNUmakefile")) 
         (command nil)) 

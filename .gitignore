@@ -8,3 +8,7 @@ resource/
 url/
 tramp
 .smex-items
+semanticdb/
+*.elc
+srecode-map.el
+ede-projects.el
