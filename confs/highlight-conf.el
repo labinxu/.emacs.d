@@ -6,6 +6,7 @@
 (add-hook 'c++-mode-hook 'highlight-parentheses-mode)
 (add-hook 'c-mode-hook 'highlight-parentheses-mode)
 (add-hook 'python-mode-hook 'highlight-parentheses-mode)
+(add-hook 'lisp-mode-hook 'highlight-parentheses-mode)
 
 (require 'highlight-indentation)
 (add-hook 'c++-mode-hook 'highlight-indentation-mode)

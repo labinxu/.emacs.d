@@ -20,16 +20,18 @@
 (global-set-key (kbd "C-c M-w") 'xah-copy-line-or-region)
 (global-set-key (kbd "C-c M-x") 'xah-cut-line-or-region)
 (global-set-key (kbd "C-=") 'er/expand-region)
-(global-set-key (kbd "C-c c") 'copy-symbol-at-point)
-(global-set-key (kbd "C-c x") 'cut-symbol-at-point)
-(global-set-key (kbd "C-c a") 'company-complete)
-(global-set-key (kbd "C-c m") 'extend-selection);;M-s s
-(global-set-key (kbd "C-c o") 'occur-at-point);;M-s O
+
+(global-set-key (kbd "C-c c w") 'copy-symbol-at-point)
+(global-set-key (kbd "C-c c x") 'cut-symbol-at-point)
+(global-set-key (kbd "C-c c o") 'occur-at-point)
+(global-set-key (kbd "C-c c s") 'extend-selection)
+
+(global-set-key (kbd "C-c s F") 'projectile-helm-ag)
+(global-set-key (kbd "C-c s i") 'helm-imenu)
+(global-set-key (kbd "C-c s f") 'helm-ag)
 
 (define-key search-map "f" 'goto-char-forward)
 (define-key search-map "b" 'goto-char-backward)
-(define-key search-map "p" 'projectile-find-file)
-(define-key search-map "s" 'projectile-switch-to-buffer)
 (global-set-key (kbd "C-c w") 'whitespace-mode)
 ;; show unncessary whitespace that can mess up your diff
 (add-hook 'prog-mode-hook
@@ -43,12 +45,10 @@
 (global-set-key [(control shift left)] 'enlarge-window-horizontally)
 (global-set-key [(control shift right)] 'shrink-window-horizontally)
 (global-set-key [(meta k)]
- (lambda () 
- (interactive) 
- (kill-buffer) 
+ (lambda ()
+ (interactive)
+ (kill-buffer)
  (delete-window)))
+
 ;;;;for neotree
-(global-set-key [f11] 'neotree-toggle) 
-;;;;;;;;;;;;;;;;;;helm;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(global-set-key (kbd "C-c j") 'helm-imenu)
-(global-set-key (kbd "C-c s") 'helm-ag)
+(global-set-key [f11] 'neotree-toggle)
