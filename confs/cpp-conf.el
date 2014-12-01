@@ -7,8 +7,7 @@
   (define-key c-mode-base-map (kbd "M-o") 'eassist-switch-h-cpp)
   (define-key c-mode-base-map (kbd "M-m") 'eassist-list-methods))
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
-(require 'ede)
-(global-ede-mode t)
+
 
 (setq auto-mode-alist  
     (cons '("\\.h$" . c++-mode)  

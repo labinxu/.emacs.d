@@ -20,7 +20,8 @@
   (interactive)
   (set-frame-font font t)
   )
-
+(require 'powerline)
+(powerline-default-theme)
 ;;(xah-set-font "DejaVv Sans Mono")
 (defcustom font-list nil "A list of fonts for `cycle-font' to cycle from." :group 'font)
 (set-default 'font-list

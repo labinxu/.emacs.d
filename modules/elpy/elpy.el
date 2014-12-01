@@ -640,7 +640,7 @@ item in another window.\n\n")
 
     ;; No virtual env
     (when (and (gethash "python_rpc_executable" config)
-               (not (gethash "virtual_env" (elpy-config--get-config))))
+               (not (gethash "virtual_env" config)))
       (elpy-insert--para
        "You have not activated a virtual env. While Elpy supports this, "
        "it is often a good idea to work inside a virtual env. You can use "
@@ -794,9 +794,10 @@ virtual_env_short"
                  (executable-find interactive-python)
                  config))
       (let ((venv (getenv "VIRTUAL_ENV")))
-        (when venv
-          (puthash "virtual_env" venv config)
-          (puthash "virtual_env_short" (file-name-nondirectory venv) config)))
+        (puthash "virtual_env" venv config)
+        (if venv
+            (puthash "virtual_env_short" (file-name-nondirectory venv) config)
+          (puthash "virtual_env_short" nil config)))
       (let ((return-value (ignore-errors
                             (let ((process-environment
                                    (elpy-rpc--environment))
@@ -3004,7 +3005,7 @@ here, and return the \"name\" as used by the backend."
   "Sort SEQ and remove any duplicates."
   (sort (delete-dups seq)
         (lambda (a b)
-          (not (string< a b)))))
+          (string< a b))))
 
 ;;;;;;;;;;;;;;;;;
 ;;; Module: ElDoc

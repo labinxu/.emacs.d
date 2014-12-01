@@ -24,16 +24,15 @@
 (global-set-key (kbd "C-c c w") 'copy-symbol-at-point)
 (global-set-key (kbd "C-c c x") 'cut-symbol-at-point)
 (global-set-key (kbd "C-c c o") 'occur-at-point)
-(global-set-key (kbd "C-c c s") 'extend-selection)
+(global-set-key (kbd "C-c c m") 'extend-selection)
 
 (global-set-key (kbd "C-c s F") 'projectile-helm-ag)
-(global-set-key (kbd "C-c s i") 'helm-imenu)
 (global-set-key (kbd "C-c s f") 'helm-ag)
 
 (define-key search-map "f" 'goto-char-forward)
 (define-key search-map "b" 'goto-char-backward)
-(global-set-key (kbd "C-c w") 'whitespace-mode)
 ;; show unncessary whitespace that can mess up your diff
+(global-set-key (kbd "C-c w") 'whitespace-mode)
 (add-hook 'prog-mode-hook
     (lambda () (interactive) (setq show-trailing-whitespace 1)))
 ;; use space to indent by default

@@ -3,6 +3,7 @@
 (setq projectile-enable-caching t)
 (setq projectile-indexing-method 'alien)
 (setq projectile-git-command "git-ls-all-files")
+(setq projectile-require-project-root nil)
 ;;(require 'grizzl)
 ;;(setq projectile-completion-system 'grizzl)
 ;;(setq projectile-completion-system 'default)
