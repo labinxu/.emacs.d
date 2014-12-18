@@ -1,4 +1,5 @@
-;;(load-theme 'solarized-dark t)
+(if (string-equal system-type "windows-nt")
+(load-theme 'solarized-dark t))
 (load-theme 'monokai t)
 (setq alpha-list '((95 95) (100 100)))
 ;;change the select background color
@@ -13,15 +14,38 @@
 (setq alpha-list (cdr (append alpha-list (list h))))))
 
 (loop-alpha)
-;;启动0.5秒后自动最大化 （windows下）  
-(run-with-idle-timer 1 nil 'w32-send-sys-command 61488)
+;;启动0.5秒后自动最大化 （windows下)
+(if (string-equal system-type "windows-nt")
+    (run-with-idle-timer 1 nil 'w32-send-sys-command 61488)
+  (toggle-frame-fullscreen)
+  )
+
+;; set default font in initial window and for any new window
+(cond
+ ((string-equal system-type "windows-nt") ; Microsoft Windows
+  (when (member "DejaVu Sans Mono" (font-family-list))
+    (add-to-list 'initial-frame-alist '(font . "DejaVu Sans Mono-10"))
+    (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-10"))
+    )
+  )
+ ((string-equal system-type "darwin")   ; Mac OS X
+  (when (member "DejaVu Sans Mono" (font-family-list))
+    (add-to-list 'initial-frame-alist '(font . "DejaVu Sans Mono-14"))
+    (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-14")))
+  )
+ ((string-equal system-type "gnu/linux") ; linux
+  (when (member "DejaVu Sans Mono" (font-family-list))
+    (add-to-list 'initial-frame-alist '(font . "DejaVu Sans Mono-10"))
+    (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-10")))
+  )
+ )
+(font-family-list)
 ;;fonts
 (defun xah-set-font(font)
   (interactive)
   (set-frame-font font t)
   )
-(require 'powerline)
-(powerline-default-theme)
+
 ;;(xah-set-font "DejaVv Sans Mono")
 (defcustom font-list nil "A list of fonts for `cycle-font' to cycle from." :group 'font)
 (set-default 'font-list
@@ -48,15 +72,6 @@
     (redraw-frame (select-frame))
     (message "Current font is: %s" fontToUse)
     (put 'cycle-font 'state stateAfter)))
-  
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(default ((t (:family "DejaVu Sans Mono" :foundry "outline" :slant normal :weight normal :height 140 :width normal)))))
- 
- 
 (defun cycle-font-forward()
   (interactive)
   (cycle-font 1))

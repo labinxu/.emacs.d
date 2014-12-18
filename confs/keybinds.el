@@ -39,6 +39,7 @@
 (setq-default indent-tabs-mode nil)
 
 ;;windows and buffer
+(global-set-key [(meta f12)] 'toggle-frame-fullscreen)
 (global-set-key [(control shift up)] 'enlarge-window)
 (global-set-key [(control shift down)] 'shrink-window)
 (global-set-key [(control shift left)] 'enlarge-window-horizontally)
@@ -49,5 +50,13 @@
  (kill-buffer)
  (delete-window)))
 
+(when (eq system-type 'darwin)
+    (setq mac-option-modifier 'meta)
+    (setq mac-command-modifier 'meta)
+    )
+
+
+
+(global-set-key [kp-delete] 'delete-char)
 ;;;;for neotree
-(global-set-key [f11] 'neotree-toggle)
+(global-set-key [(meta f11)] 'neotree-toggle)
