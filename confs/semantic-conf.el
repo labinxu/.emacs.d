@@ -1,0 +1,7 @@
+(require 'semantic)
+(add-hook 'c++-mode-hook 'init-semantic)
+(add-hook 'python-mode-hook 'init-semantic)
+(defun init-semantic()
+  (semantic-mode t)
+  (global-semantic-idle-scheduler-mode t)
+  (global-semantic-stickyfunc-mode t))

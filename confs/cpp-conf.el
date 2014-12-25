@@ -12,8 +12,8 @@
 (setq auto-mode-alist  
     (cons '("\\.h$" . c++-mode)  
      auto-mode-alist)
-)  
-            
+)
+
 (defun font-lock()
     (global-font-lock-mode t)
 )
