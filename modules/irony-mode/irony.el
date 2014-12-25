@@ -40,10 +40,6 @@
 ;;         'irony-completion-at-point-async))
 ;;     (add-hook 'irony-mode-hook 'my-irony-mode-hook)
 ;;
-;;     ;; Only needed on Windows
-;;     (when (eq system-type 'windows-nt)
-;;       (setq w32-pipe-read-delay 0))
-;;
 ;; See also:
 ;; - https://github.com/Sarcasm/company-irony
 ;; - https://github.com/Sarcasm/ac-irony
@@ -277,19 +273,10 @@ Possible values are:
     (irony-mode-exit)))
 
 (defun irony-mode-enter ()
-  ;; warn the user about modes such as php-mode who inherits c-mode
   (when (not (memq major-mode irony-supported-major-modes))
-    (display-warning 'irony "Major mode is unknown to Irony,\
- see `irony-supported-major-modes'."))
-  ;; warn the user about Windows-specific issues
-  (when (eq system-type 'windows-nt)
-    (cond
-     ((version< emacs-version "24.4")
-      (display-warning 'irony "Emacs >= 24.4 expected on Windows."))
-     ((and (boundp 'w32-pipe-read-delay) (> w32-pipe-read-delay 0))
-      (display-warning 'irony "Performance will be bad because a\
- pipe delay is set for this platform (see variable\
- `w32-pipe-read-delay')."))))
+    ;; warn the user about modes such as php-mode who inherits c-mode
+    (display-warning 'irony "Irony mode is aimed to work with a\
+ major mode present in `irony-supported-major-modes'."))
   (unless irony--clang-options
     (irony-cdb-load-compile-options))
   (irony-completion--enter))
@@ -382,9 +369,9 @@ to be consumed by `irony-split-command-line'."
                             (aref quoted-str (1+ i)))))
           (when (member next-ch '(?\\ ?\"))
             (setq ch next-ch)
-            (cl-incf i))))
+            (incf i))))
       (push ch result)
-      (cl-incf i))
+      (incf i))
     result))
 
 (defun irony-split-command-line (cmd-line)
@@ -430,9 +417,9 @@ breaks with escaped quotes in compile_commands.json, such as in:
             (when (or (member next-ch '(?\\ ?\"))
                       (member next-ch spaces))
               (setq ch next-ch)
-              (cl-incf i))))
+              (incf i))))
         (push ch cur-arg)
-        (cl-incf i))))
+        (incf i))))
     (when cur-arg
       (setq args (cons (apply 'string (nreverse cur-arg)) args)))
     (nreverse args)))

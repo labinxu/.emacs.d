@@ -10,18 +10,24 @@
 ;;add all module dir in to load path
 (dolist
     (dir (directory-files emacs-modules-dir))
-    (add-to-list 'load-path (concat emacs-modules-dir dir)))
+  (add-to-list 'load-path (concat emacs-modules-dir dir)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     
 (dolist
     (dir (directory-files emacs-color-theme-dir))
-    (add-to-list 'custom-theme-load-path (concat emacs-color-theme-dir dir)))
+  (add-to-list 'custom-theme-load-path (concat emacs-color-theme-dir dir)))
+
+(setq mylist '(1 2 3))
+(setq relist '(4))
+(dolist
+    (var mylist)
+  (print var))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;    
 
 (loop for file in (directory-files emacs-confs-dir t "\\.el")
       do (load file nil nil t))
-(require 'popwin)
-(popwin-mode)
+;;(require 'popwin)
+;;(popwin-mode)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
