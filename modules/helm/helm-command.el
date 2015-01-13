@@ -43,13 +43,22 @@ Show all candidates on startup when 0 (default)."
   :group 'helm-command
   :type 'boolean)
 
+(defcustom helm-M-x-fuzzy-match nil
+  "Enable fuzzy matching in `helm-M-x' when non--nil.")
+
 
 ;;; Faces
 ;;
 ;;
+(defgroup helm-command-faces nil
+  "Customize the appearance of helm-command."
+  :prefix "helm-"
+  :group 'helm-command
+  :group 'helm-faces)
+
 (defface helm-M-x-key '((t (:foreground "orange" :underline t)))
   "Face used in helm-M-x to show keybinding."
-  :group 'helm-command)
+  :group 'helm-command-faces)
 
 
 (defvar helm-M-x-input-history nil)
@@ -94,9 +103,11 @@ Return nil if no mode-map found."
 
 
 (defun helm-M-x-transformer-1 (candidates &optional sort)
-  "filtered-candidate-transformer to show bindings in emacs commands.
+  "Transformer function to show bindings in emacs commands.
 Show global bindings and local bindings according to current `major-mode'.
-If SORT is non nil sort list with `helm-generic-sort-fn'."
+If SORT is non nil sort list with `helm-generic-sort-fn'.
+Note that SORT should not be used when fuzzy matching because
+fuzzy matching is running its own sort function with a different algorithm."
   (with-helm-current-buffer
     (cl-loop with local-map = (helm-M-x-current-mode-map-alist)
           for cand in candidates
@@ -120,10 +131,10 @@ If SORT is non nil sort list with `helm-generic-sort-fn'."
 
 (defun helm-M-x-transformer (candidates _source)
   "Transformer function for `helm-M-x' candidates."
-  (helm-M-x-transformer-1 candidates 'sort))
+  (helm-M-x-transformer-1 candidates (null helm--in-fuzzy)))
 
 (defun helm-M-x-transformer-hist (candidates _source)
-  "Transformer function for `helm-M-x' candidates history."
+  "Transformer function for `helm-M-x' candidates."
   (helm-M-x-transformer-1 candidates))
 
 (defun helm-M-x--notify-prefix-arg ()
@@ -145,6 +156,9 @@ You can get help on each command by persistent action."
   (let* ((history (cl-loop for i in extended-command-history
                         when (commandp (intern i)) collect i))
          command sym-com in-help help-cand
+         (orig-fuzzy-sort-fn helm-fuzzy-sort-fn)
+         (helm-fuzzy-sort-fn (lambda (candidates source)
+                               (funcall orig-fuzzy-sort-fn candidates source 'real)))
          (helm--mode-line-display-prefarg t)
          (pers-help #'(lambda (candidate)
                         (let ((hbuf (get-buffer (help-buffer))))
@@ -163,10 +177,13 @@ You can get help on each command by persistent action."
                           (setq help-cand candidate))))
          (tm (run-at-time 1 0.1 'helm-M-x--notify-prefix-arg)))
     (unwind-protect
-         (progn
+         (let ((msg "Error: Specifying a prefix arg before calling `helm-M-x'"))
            (when current-prefix-arg
-             (user-error
-              "Error: Specifying a prefix arg before calling `helm-M-x'"))
+             (ding)
+             (message "%s" msg)
+             (while (not (sit-for 1))
+               (discard-input))
+             (user-error msg))
            (setq current-prefix-arg nil)
            (setq command (helm-comp-read
                           "M-x " obarray
@@ -181,6 +198,7 @@ You can get help on each command by persistent action."
                           :del-input nil
                           :mode-line helm-M-x-mode-line
                           :must-match t
+                          :fuzzy helm-M-x-fuzzy-match
                           :nomark t
                           :keymap helm-M-x-map
                           :candidates-in-buffer t

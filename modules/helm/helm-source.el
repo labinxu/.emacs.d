@@ -31,6 +31,11 @@
 (require 'cl-lib)
 (require 'eieio)
 
+;; Fix compatibility with emacs-25 (Issue #815).
+(unless (fboundp 'class-slot-initarg)
+  (defalias 'class-slot-initarg 'eieio--class-slot-initarg))
+
+
 (defgeneric helm--setup-source (source)
   "Prepare slots and handle slot errors before creating a helm source.")
 
@@ -375,7 +380,10 @@
     :documentation
     "  Enable fuzzy matching in this source.
   This will overwrite settings in MATCH slot, and for
-  sources build with child class `helm-source-in-buffer' the SEARCH slot.")
+  sources built with child class `helm-source-in-buffer' the SEARCH slot.
+  This is an easy way of enabling fuzzy matching, but you can use the MATCH
+  or SEARCH slots yourself if you want something more elaborated, mixing
+  different type of match (See `helm-source-buffers' class for example).")
 
    (nomark
     :initarg :nomark
@@ -389,7 +397,12 @@
     :initform nil
     :custom boolean
     :documentation
-    "  Disable highlight match in this source.")
+    "  Disable highlight match in this source.
+  This will disable generic highlighting done by matchplugin,
+  but some specialized highlighting can be done from elsewhere,
+  i.e `filtered-candidate-transformer' or `filter-one-by-one' slots,
+  so even if non--nil this may have no effect if highlighting is handled
+  from somewhere else.")
    
    (allow-dups
     :initarg :allow-dups
@@ -437,7 +450,7 @@
 
    (header-line
     :initarg :header-line
-    :initform 'helm-persistent-help-string
+    :initform nil
     :custom (choice string function)
     :documentation
     "  Source local `header-line-format'.
@@ -476,7 +489,7 @@
 
    (dont-plug
     :initarg :dont-plug
-    :initform nil
+    :initform '(helm-compile-source--persistent-help)
     :custom list
     :documentation
     "  A list of compile functions plugin to ignore.")
@@ -494,6 +507,17 @@
     :initform t
     :custom boolean)
 
+   (match-part
+    :initarg :match-part
+    :initform nil
+    :custom function
+    :documentation
+    "  Allow matching only one part of candidate.
+  If source contain match-part attribute, match is computed only
+  on part of candidate returned by the call of function provided
+  by this attribute. The function should have one arg, candidate,
+  and return only a specific part of candidate.")
+   
    (before-init-hook
     :initarg :before-init-hook
     :initform nil
@@ -518,7 +542,8 @@
     :initform '("ERROR: You must specify the `candidates' slot, either with a list or a function"))
 
    (dont-plug
-    :initform '(helm-compile-source--match-plugin))
+    :initform '(helm-compile-source--match-plugin
+                helm-compile-source--persistent-help))
    
    (match-strict
     :initarg :match-strict
@@ -530,7 +555,14 @@
   functions will be concatened, which in some cases is not what
   is wanted. When using `match-strict' only this or these
   functions will be used. You can specify those functions as a
-  list of functions or a single symbol function.")))
+  list of functions or a single symbol function.
+
+  NOTE: This have the same effect as using :MATCHPLUGIN nil."))
+
+  "Use this class to make helm sources using a list of candidates.
+This list should be given as a normal list, a variable handling a list
+or a function returning a list.
+Matching is done basically with `string-match' against each candidate.")
 
 (defclass helm-source-async (helm-source)
   ((candidates-process
@@ -542,7 +574,11 @@
   an async process instead of `candidates'.
   The function must return a process.")
 
-   (matchplugin :initform nil)))
+   (matchplugin :initform nil))
+
+  "Use this class to define a helm source calling an external process.
+The :candidates slot is not allowed even if described because this class
+inherit from `helm-source'.")
 
 (defclass helm-source-in-buffer (helm-source)
   ((init
@@ -560,7 +596,8 @@
    
    (dont-plug
     :initform '(helm-compile-source--candidates-in-buffer
-                helm-compile-source--match-plugin))
+                helm-compile-source--match-plugin
+                helm-compile-source--persistent-help))
    
    (candidates
     :initform 'helm-candidates-in-buffer)
@@ -591,8 +628,13 @@
   Buffer search function used by `helm-candidates-in-buffer'.
   By default, `helm-candidates-in-buffer' uses `re-search-forward'.
   The function should take one arg PATTERN.
+  If your search function needs to handle negation like matchplugin,
+  this function should returns in such case a cons cell of two integers defining
+  the beg and end positions to match in the line previously matched by
+  `re-search-forward' or similar, and move point to next line
+  (See how the `helm-mp-3-search-base' and `helm-fuzzy-search' functions are working).
 
-  Note that FUZZY-MATCH slot wiil overhide value of this slot.")
+  NOTE: FUZZY-MATCH slot will overhide value of this slot.")
 
    (search-from-end
     :initarg :search-from-end
@@ -603,7 +645,7 @@
   If this attribute is specified, `helm-candidates-in-buffer'
   uses `re-search-backward' instead.
 
-  NOTE: This is here for compatibilty, but it is not used anymore.")
+  NOTE: This is here for compatibilty, but it is deprecated and not used anymore.")
 
    (search-strict
     :initarg :search-strict
@@ -615,31 +657,14 @@
   functions will be concatened, which in some cases is not what
   is wanted. When using `search-strict' only this or these
   functions will be used. You can specify those functions as a
-  list of functions or a single symbol function.")
+  list of functions or a single symbol function.
 
-   (match-part
-    :initarg :match-part
-    :initform nil
-    :custom function
-    :documentation
-    "  Allow matching candidate in the line with `candidates-in-buffer'.
-  In candidates-in-buffer sources, match is done with
-  `re-search-forward' which allow matching only a regexp on the
-  `helm-buffer'; when this search is done, match-part allow
-  matching only a specific part of the current line e.g with a
-  line like this:
+  NOTE: This have the same effect as using a nil value for
+        :MATCHPLUGIN slot."))
 
-  filename:candidate-containing-the-word-filename
-
-  What you want is to ignore \"filename\" part and match only
-  \"candidate-containing-the-word-filename\"
-
-  So give a function matching only the part of candidate after \":\"
-
-  If source contain match-part attribute, match is computed only
-  on part of candidate returned by the call of function provided
-  by this attribute. The function should have one arg, candidate,
-  and return only a specific part of candidate.")))
+  "Use this source to make helm sources storing candidates inside a buffer.
+Contrarily to `helm-source-sync' candidates are matched using a function
+like `re-search-forward', see below documentation of :search slot.")
 
 (defclass helm-source-dummy (helm-source)
   ((candidates
@@ -752,6 +777,35 @@
                                                      helm-buffers-sort-transformer
                                                      helm-highlight-buffers)))
 
+;; Functions
+(defclass helm-type-function (helm-source) ()
+  "A class to define helm type function.")
+
+(defmethod helm--setup-source :before ((source helm-type-function))
+  (oset source :action (helm-make-actions
+                         "Describe command" 'describe-function
+                         "Add command to kill ring" 'helm-kill-new
+                          "Go to command's definition" 'find-function
+                          "Debug on entry" 'debug-on-entry
+                          "Cancel debug on entry" 'cancel-debug-on-entry
+                          "Trace function" 'trace-function
+                          "Trace function (background)" 'trace-function-background
+                          "Untrace function" 'untrace-function))
+  (oset source :action-transformer 'helm-transform-function-call-interactively)
+  (oset source :candidate-transformer 'helm-mark-interactive-functions)
+  (oset source :coerce 'helm-symbolify))
+
+;; Commands
+(defclass helm-type-command (helm-source) ()
+  "A class to define helm type command.")
+
+(defmethod helm--setup-source :before ((source helm-type-command))
+  (oset source :action (append (helm-make-actions
+                                "Call interactively" 'helm-call-interactively)
+                               (helm-actions-from-type-function)))
+  (oset source :coerce 'helm-symbolify)
+  (oset source :persistent-action 'describe-function))
+
 
 ;;; Error functions
 ;;
@@ -778,6 +832,7 @@ Argument NAME is a string which define the source name, so no need to use
 the keyword :name in your source, NAME will be used instead.
 Argument CLASS is an eieio class object.
 Arguments ARGS are keyword value pairs as defined in CLASS."
+  (declare (indent 2))  
   (let ((source (apply #'make-instance class name args)))
     (oset source :name name)
     (helm--setup-source source)
@@ -842,22 +897,80 @@ an eieio class."
           (delq nil (append (list transformer) action-transformers)))))
 
 ;;; Methods to access types slots.
+;;
+;;
 (defmethod helm-source-get-action-from-type ((object helm-type-file))
+  (oref object :action))
+
+(defmethod helm-source-get-action-from-type ((object helm-type-buffer))
+  (oref object :action))
+
+(defmethod helm-source-get-action-from-type ((object helm-type-bookmark))
+  (oref object :action))
+
+(defmethod helm-source-get-action-from-type ((object helm-type-function))
   (oref object :action))
 
 
 ;;; Methods to build sources.
 ;;
 ;;
+(defun helm-source--persistent-help-string (string source)
+  (substitute-command-keys
+   (concat "\\<helm-map>\\[helm-execute-persistent-action]: "
+           (or (format "%s (keeping session)" string)
+               (oref source :header-line)))))
+
+(defun helm-source--header-line (source)
+  (substitute-command-keys
+   (concat "\\<helm-map>\\[helm-execute-persistent-action]: "
+           (helm-aif (or (oref source :persistent-action)
+                         (oref source :action))
+               (cond ((or (symbolp it) (functionp it))
+                          (helm-symbol-name it))
+                     ((listp it)
+                      (let ((action (car it)))
+                        ;; It comes from :action ("foo" . function).
+                        (if (stringp (car action))
+                            (car action)
+                            ;; It comes from :persistent-action
+                            ;; (function . 'nosplit) Fix Issue #788.
+                            (if (or (symbolp action)
+                                    (functionp action))
+                                (helm-symbol-name action)))))
+                     (t ""))
+             "")
+           " (keeping session)")))
+
 (defmethod helm--setup-source :before ((source helm-source))
   (helm-aif (slot-value source :keymap)
-      (and (symbolp it) (set-slot-value source :keymap (symbol-value it)))))
+      (and (symbolp it) (set-slot-value source :keymap (symbol-value it))))
+  (oset source :header-line (helm-source--header-line source))
+  (helm-aif (slot-value source :persistent-help)
+      (oset source :header-line (helm-source--persistent-help-string it source)))
+  (when (slot-value source :fuzzy-match)
+    (oset source :nohighlight t)
+    (when helm-fuzzy-matching-highlight-fn
+      (oset source :filter-one-by-one
+            (helm-aif (oref source :filter-one-by-one)
+                (append (helm-mklist it)
+                        (list helm-fuzzy-matching-highlight-fn))
+              (list helm-fuzzy-matching-highlight-fn))))
+    (when helm-fuzzy-sort-fn
+      (oset source :filtered-candidate-transformer
+            (helm-aif (oref source :filtered-candidate-transformer)
+                (append (helm-mklist it)
+                        (list helm-fuzzy-sort-fn))
+              (list helm-fuzzy-sort-fn))))))
 
 (defmethod helm-setup-user-source ((_source helm-source)))
 
 (defmethod helm--setup-source ((source helm-source-sync))
   (when (slot-value source :fuzzy-match)
-    (oset source :match 'helm-fuzzy-match))
+    (helm-aif (oref source :match)
+        (oset source :match (append (helm-mklist it)
+                                    (list helm-fuzzy-match-fn)))
+      (oset source :match helm-fuzzy-match-fn)))
   (when (slot-value source :matchplugin)
     (oset source :match
           (helm-source-mp-get-search-or-match-fns source 'match))))
@@ -877,9 +990,10 @@ an eieio class."
                             'global
                           (if (functionp it) (funcall it) it))))))))
   (when (slot-value source :fuzzy-match)
-    (oset source :search '(helm-fuzzy-search))
-    (unless (oref source :match-part)
-      (oset source :match-part 'identity)))
+    (helm-aif (oref source :search)
+        (oset source :search (append (helm-mklist it)
+                                     (list helm-fuzzy-search-fn)))
+      (oset source :search (list helm-fuzzy-search-fn))))
   (when (slot-value source :matchplugin)
     (oset source :search (helm-source-mp-get-search-or-match-fns source 'search)))
   (let ((mtc (slot-value source :match)))
@@ -941,6 +1055,22 @@ Args ARGS are keywords provided by `helm-source-dummy'."
 
 (defun helm-build-type-file ()
   (helm-make-type 'helm-type-file))
+
+(defun helm-actions-from-type-function ()
+  (let ((source (make-instance 'helm-type-function)))
+    (helm--setup-source source)
+    (helm-source-get-action-from-type source)))
+
+(defun helm-build-type-function ()
+  (helm-make-type 'helm-type-function))
+
+(defun helm-actions-from-type-command ()
+  (let ((source (make-instance 'helm-type-command)))
+    (helm--setup-source source)
+    (helm-source-get-action-from-type source)))
+
+(defun helm-build-type-command ()
+  (helm-make-type 'helm-type-command))
 
 (provide 'helm-source)
 
