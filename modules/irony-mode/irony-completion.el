@@ -57,13 +57,6 @@
   :type '(repeat function)
   :group 'irony-completion)
 
-;;;###autoload
-(defcustom irony-completion-hook nil
-  ;; TODO: proper documentation
-  "Function called when new completion data are available."
-  :type 'hook
-  :group 'irony-completion)
-
 
 ;;
 ;; Public variables
@@ -136,18 +129,14 @@ disable if irony-server isn't available.")
 ;;
 
 (defun irony-completion--enter ()
-  (add-hook 'post-command-hook 'irony-completion-post-command nil t)
+  (add-hook 'post-command-hook 'irony-completion--post-command nil t)
   (add-hook 'completion-at-point-functions 'irony-completion-at-point nil t)
-  (add-hook 'irony-clang-options-updated-hook
-            'irony-completion--clang-options-updated nil t)
   (setq irony-completion-mode t))
 
 (defun irony-completion--exit ()
   (setq irony-completion-mode nil)
-  (remove-hook 'post-command-hook 'irony-completion-post-command t)
+  (remove-hook 'post-command-hook 'irony-completion--post-command t)
   (remove-hook 'completion-at-point-functions 'irony-completion-at-point t)
-  (remove-hook 'irony-clang-options-updated-hook
-               'irony-completion--clang-options-updated t)
   (setq irony-completion--context nil
         irony-completion--candidates nil
         irony-completion--context-tick 0
@@ -155,21 +144,11 @@ disable if irony-server isn't available.")
         irony-completion--request-callbacks nil
         irony-completion--candidates-tick 0))
 
-(defun irony-completion-post-command ()
+(defun irony-completion--post-command ()
   (when (and (memq this-command irony-completion-trigger-commands)
              (irony-completion--update-context)
              (irony-completion-at-trigger-point-p))
     (irony-completion--send-request)))
-
-(defun irony-completion--clang-options-updated ()
-  (let ((had-candidates (or (irony-completion-candidates-available-p)
-                            (irony-completion--still-completing-p))))
-    ;; change the context so that candidates are no longer available
-    (setq irony-completion--context nil)
-    (when had-candidates
-      (irony-completion--update-context)
-      (when irony-completion--context
-        (irony-completion--send-request)))))
 
 (defun irony-completion--update-context ()
   "Update the completion context variables based on the current position.
@@ -220,7 +199,7 @@ Return t if the context has been updated, nil otherwise."
       (goto-char (irony-completion-beginning-of-symbol))
       ;; `position-bytes' to handle multibytes and 'multicolumns' (i.e
       ;; tabulations) characters properly
-      (irony-without-narrowing
+      (irony--without-narrowing
         (setq line (line-number-at-pos)
               column (1+ (- (position-bytes (point))
                             (position-bytes (point-at-bol)))))))
@@ -237,7 +216,6 @@ Return t if the context has been updated, nil otherwise."
     (setq
      irony-completion--candidates-tick tick
      irony-completion--candidates candidates)
-    (run-hooks 'irony-completion-hook)
     (mapc 'funcall irony-completion--request-callbacks)))
 
 (defun irony-completion--still-completing-p ()

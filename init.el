@@ -16,8 +16,7 @@
 (dolist
     (dir (directory-files emacs-color-theme-dir))
     (add-to-list 'custom-theme-load-path (concat emacs-color-theme-dir dir)))
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;    
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (loop for file in (directory-files emacs-confs-dir t "\\.el")
       do (load file nil nil t))
 (if (string-equal system-type "windows-nt")
@@ -28,4 +27,10 @@
 (if (string-equal system-type "darwin")
     (progn
       (add-to-list 'exec-path "/Library/Frameworks/Python.framework/Versions/2.7/bin")
-      (add-to-list 'exec-path "/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages")))
+      (add-to-list 'exec-path "/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages")
+      (add-to-list 'exec-path "/opt/local/bin")
+      (add-to-list 'exec-path "/opt/local/sbin")
+      (add-to-list 'exec-path "/usr/local/bin")
+      ))
+(setenv "PATH"
+    (concat (getenv "PATH") ":" "/usr/local/bin" ":" "/opt/local/sbin" ":" "/opt/local/bin"))

@@ -38,7 +38,6 @@
 
 (require 'company-c-headers)
 (add-to-list 'company-backends 'company-c-headers)
-(add-to-list 'company-c-headers-path-system "C:/MinGW/include")
-(add-to-list 'company-c-headers-path-system "C:/MinGW/msys/1.0/include")
-(add-to-list 'company-c-headers-path-system "C:/MinGW/lib/gcc/mingw32/4.8.1/include/c++")
+(add-to-list 'company-c-headers-path-system "/usr/include")
+(add-to-list 'company-c-headers-path-system "/usr/include/c++/4.2.1")
 (add-to-list 'company-c-headers-path-system ".")
