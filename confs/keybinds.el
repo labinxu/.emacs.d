@@ -9,7 +9,8 @@
 (require 'window-numbering)
 (window-numbering-mode t)
 
-
+(winner-mode)
+(global-set-key(kbd "C-c u w") 'winner-undo)
 ;;;;;;;;edit;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (global-set-key (kbd "C-z") 'undo)
 (global-set-key (kbd "<M-up>") 'move-line-up)

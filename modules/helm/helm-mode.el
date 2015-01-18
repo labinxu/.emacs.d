@@ -31,7 +31,6 @@
     (describe-variable . helm-completing-read-symbols)
     (debug-on-entry . helm-completing-read-symbols)
     (find-function . helm-completing-read-symbols)
-    (execute-extended-command . helm-completing-read-symbols)
     (find-tag . helm-completing-read-with-cands-in-buffer)
     (ffap-alternate-file . nil)
     (tmm-menubar . nil))
@@ -217,6 +216,7 @@ If COLLECTION is an `obarray', a TEST should be needed. See `obarray'."
                             preselect
                             (buffer "*Helm Completions*")
                             must-match
+                            fuzzy
                             reverse-history
                             (requires-pattern 0)
                             history
@@ -342,6 +342,8 @@ that use `helm-comp-read' See `helm-M-x' for example."
                         (make-composed-keymap
                          must-match-map (or keymap helm-map))
                       (or keymap helm-map)))
+           (minibuffer-completion-predicate test)
+           (minibuffer-completion-table collection)
            (helm-read-file-name-mode-line-string
             (replace-regexp-in-string "helm-maybe-exit-minibuffer"
                                       "helm-confirm-and-exit-minibuffer"
@@ -379,29 +381,28 @@ that use `helm-comp-read' See `helm-M-x' for example."
                                              all)
                                            :test 'equal))))))
            (src-hist (helm-build-sync-source (format "%s History" name)
-                       :candidates history-get-candidates
-                       :filtered-candidate-transformer
-                       (append '((lambda (candidates sources)
-                                   (cl-loop for i in candidates
-                                            ;; Input is added to history in completing-read's
-                                            ;; and may be regexp-quoted, so unquote it.
-                                            for cand = (replace-regexp-in-string "\\s\\" "" i)
-                                            do (set-text-properties 0 (length cand) nil cand)
-                                            collect cand)))
-                               (and hist-fc-transformer
-                                    (list hist-fc-transformer)))
-                       :persistent-action persistent-action
-                       :persistent-help persistent-help
-                       :keymap loc-map
-                       :mode-line mode-line
-                       :action action-fn))
+                         :candidates history-get-candidates
+                         :fuzzy-match fuzzy
+                         :filtered-candidate-transformer
+                         (append '((lambda (candidates sources)
+                                     (cl-loop for i in candidates
+                                              ;; Input is added to history in completing-read's
+                                              ;; and may be regexp-quoted, so unquote it.
+                                              for cand = (replace-regexp-in-string "\\s\\" "" i)
+                                              do (set-text-properties 0 (length cand) nil cand)
+                                              collect cand)))
+                                 (and hist-fc-transformer (helm-mklist hist-fc-transformer)))
+                         :persistent-action persistent-action
+                         :persistent-help persistent-help
+                         :mode-line mode-line
+                         :action action-fn))
            (src (helm-build-sync-source name
                   :candidates get-candidates
                   :filtered-candidate-transformer fc-transformer
                   :requires-pattern requires-pattern
                   :persistent-action persistent-action
                   :persistent-help persistent-help
-                  :keymap loc-map
+                  :fuzzy-match fuzzy
                   :mode-line mode-line
                   :action action-fn))
            (src-1 (helm-build-in-buffer-source name
@@ -409,8 +410,8 @@ that use `helm-comp-read' See `helm-M-x' for example."
                     :filtered-candidate-transformer fc-transformer
                     :requires-pattern requires-pattern
                     :persistent-action persistent-action
+                    :fuzzy-match fuzzy
                     :persistent-help persistent-help
-                    :keymap loc-map
                     :mode-line mode-line
                     :action action-fn))
            (src-list (list src-hist
@@ -488,40 +489,34 @@ that use `helm-comp-read' See `helm-M-x' for example."
     (prompt _collection test _require-match init
      hist default _inherit-input-method name buffer)
   "Specialized function for fast symbols completion in `helm-mode'."
-  (let ((sources
-         (list (helm-build-in-buffer-source name
-                 :init `(lambda ()
-                          (require 'helm-elisp)
-                          (with-current-buffer (helm-candidate-buffer 'global)
-                            (goto-char (point-min))
-                            (when (and ,default (stringp ,default)
-                                       ;; Some defaults args result as
-                                       ;; (symbol-name nil) == "nil".
-                                       ;; e.g debug-on-entry.
-                                       (not (string= ,default "nil"))
-                                       (not (string= ,default "")))
-                              (insert (concat ,default "\n")))
-                            (cl-loop for sym in (all-completions "" obarray ',test)
-                                     for s = (intern sym)
-                                     unless (or (and ,default (string= sym ,default))
-                                                (keywordp s))
-                                     do (insert (concat sym "\n")))))
-                 :persistent-action 'helm-lisp-completion-persistent-action
-                 :persistent-help "Show brief doc in mode-line")
-               (helm-build-sync-source (concat name " history")
-                 :candidates hist
-                 :persistent-action 'helm-lisp-completion-persistent-action
-                 :persistent-help "Show brief doc in mode-line"))))
-    (or
-     (helm
-      :sources (if helm-mode-reverse-history sources (reverse sources))
-      :prompt prompt
-      :buffer buffer
-      :input init
-      :history hist
-      :resume 'noresume
-      :default (or default ""))
-     (helm-mode--keyboard-quit))))
+  (or
+   (helm
+    :sources (helm-build-in-buffer-source name
+               :init `(lambda ()
+                        (require 'helm-elisp)
+                        (with-current-buffer (helm-candidate-buffer 'global)
+                          (goto-char (point-min))
+                          (when (and ,default (stringp ,default)
+                                     ;; Some defaults args result as
+                                     ;; (symbol-name nil) == "nil".
+                                     ;; e.g debug-on-entry.
+                                     (not (string= ,default "nil"))
+                                     (not (string= ,default "")))
+                            (insert (concat ,default "\n")))
+                          (cl-loop for sym in (all-completions "" obarray ',test)
+                                   for s = (intern sym)
+                                   unless (or (and ,default (string= sym ,default))
+                                              (keywordp s))
+                                   do (insert (concat sym "\n")))))
+               :persistent-action 'helm-lisp-completion-persistent-action
+               :persistent-help "Show brief doc in mode-line")
+    :prompt prompt
+    :buffer buffer
+    :input init
+    :history hist
+    :resume 'noresume
+    :default (or default ""))
+     (helm-mode--keyboard-quit)))
 
 
 ;;; Generic completing read
@@ -596,9 +591,7 @@ Don't use it directly, use instead `helm-comp-read' in your programs.
 
 See documentation of `completing-read' and `all-completions' for details."
   (let* ((current-command (or (helm-this-command) this-command))
-         (str-command     (if (consp current-command) ; Maybe a lambda.
-                              "Anonymous"
-                            (symbol-name current-command)))
+         (str-command     (helm-symbol-name current-command))
          (buf-name        (format "*helm-mode-%s*" str-command))
          (entry           (assq current-command
                                 helm-completing-read-handlers-alist))
@@ -755,6 +748,8 @@ Keys description:
                    (make-composed-keymap
                     must-match-map helm-read-file-map)
                  helm-read-file-map))
+         (minibuffer-completion-predicate test)
+         (minibuffer-completing-file-name t)
          (helm-read-file-name-mode-line-string
           (replace-regexp-in-string "helm-maybe-exit-minibuffer"
                                     "helm-confirm-and-exit-minibuffer"
@@ -765,7 +760,6 @@ Keys description:
                                                helm-find-files-doc-header)))
                       (mode-line . ,mode-line)
                       (candidates . ,hist)
-                      (keymap . ,cmap)
                       (persistent-action . ,persistent-action)
                       (persistent-help . ,persistent-help)
                       (action . ,action-fn))
@@ -794,7 +788,6 @@ Keys description:
                                      (helm-find-files-get-candidates ',must-match)))))
                       (filtered-candidate-transformer . helm-ff-sort-candidates)
                       (filter-one-by-one . helm-ff-filter-candidate-one-by-one)
-                      (keymap . ,cmap)
                       (persistent-action . ,persistent-action)
                       (candidate-number-limit . 9999)
                       (persistent-help . ,persistent-help)
@@ -807,6 +800,7 @@ Keys description:
                              src-list)
                   :input initial-input
                   :prompt prompt
+                  :keymap cmap
                   :resume 'noresume
                   :case-fold-search case-fold
                   :default default
@@ -837,7 +831,7 @@ Keys description:
 Don't use it directly, use instead `helm-read-file-name' in your programs."
   (let* ((init (or initial dir default-directory))
          (current-command (or (helm-this-command) this-command))
-         (str-command (symbol-name current-command))
+         (str-command (helm-symbol-name current-command))
          (helm-file-completion-sources
           (cons str-command
                 (remove str-command helm-file-completion-sources)))

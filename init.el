@@ -10,7 +10,7 @@
 ;;add all module dir in to load path
 (dolist
     (dir (directory-files emacs-modules-dir))
-    (add-to-list 'load-path (concat emacs-modules-dir dir)))
+  (add-to-list 'load-path (concat emacs-modules-dir dir)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     
 (dolist
@@ -34,3 +34,5 @@
       ))
 (setenv "PATH"
     (concat (getenv "PATH") ":" "/usr/local/bin" ":" "/opt/local/sbin" ":" "/opt/local/bin"))
+  (add-to-list 'custom-theme-load-path (concat emacs-color-theme-dir dir))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;    

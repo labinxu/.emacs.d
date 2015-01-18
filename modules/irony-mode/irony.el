@@ -1,4 +1,4 @@
-
+;;; irony.el --- C/C++ minor mode powered by libclang
 
 ;; Copyright (C) 2011-2014  Guillaume Papin
 
