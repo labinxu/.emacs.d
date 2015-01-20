@@ -28,9 +28,9 @@
  ;; If there is more than one, they won't work right.
  '(company-backends
    (quote
-    (company-c-headers company-irony company-gtags company-eclim company-clang company-xcode company-cmake company-capf
-                       (company-dabbrev-code company-bbdb company-etags company-keywords)
-                       company-oddmuse company-files company-dabbrev)))
+    (company-gtags company-c-headers company-irony company-clang company-xcode company-cmake company-capf
+                   (company-dabbrev-code company-gtags company-etags company-keywords)
+                   company-oddmuse company-files company-dabbrev)))
  '(helm-gtags-auto-update t)
  '(helm-gtags-ignore-case t)
  '(helm-gtags-path-style (quote relative)))
