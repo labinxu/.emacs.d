@@ -2,8 +2,8 @@
 (add-hook 'c++-mode-hook 'irony-mode)
 (add-hook 'c-mode-hook 'irony-mode)
 (add-hook 'objc-mode-hook 'irony-mode)
-(when (eq system-type 'windows-nt)
-  (setq w32-pipe-read-delay 0))
+
+(setq w32-pipe-read-delay 0)
 ;; replace the `completion-at-point' and `complete-symbol' bindings in
 ;; irony-mode's buffers by irony-mode's function
 (defun my-irony-mode-hook ()
@@ -15,3 +15,4 @@
 (require 'irony-cdb)
 (require 'irony-completion)
 (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
+(autoload 'irony-enable "irony")

@@ -7,14 +7,14 @@
 ;; (optional) adds CC special commands to `company-begin-commands' in order to
 ;; trigger completion at interesting places, such as after scope operator
 ;;     std::|
-(add-hook 'irony-mode-hook 'company-irony-setup-begin-commands)
+;;(add-hook 'irony-mode-hook 'company-irony-setup-begin-commands)
 
 (add-hook 'after-init-hook 'global-company-mode)
 
 
 (setq company-idle-delay 0.2)
 (setq company-minimum-prefix-length 2)
-(setq company-begin-commands '(self-insert-command))
+;;(setq company-begin-commands '(self-insert-command))
 (dolist (hook (list
                'emacs-lisp-mode-hook
                'lisp-mode-hook
@@ -31,7 +31,6 @@
                'python-mode
                ))
   (add-hook hook 'company-mode))
-
 ;;; To retrieve completion candidates for your proreate a file named .dir-locals.el at your project root:
 ;;;((nil . ((company-clang-arguments . ("-I/home/<user>/project_root/include1/"
 ;;;;                                     "-I/home/<user>/project_root/include2/")))))
