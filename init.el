@@ -39,8 +39,8 @@
  ;; If there is more than one, they won't work right.
  '(company-backends
    (quote
-    ((company-keywords company-clang company-gtags)
-     company-gtags company-c-headers company-irony company-xcode company-cmake company-capf
+    ((company-keywords company-clang company-gtags company-c-headers)
+     company-gtags company-irony company-xcode company-cmake company-capf
      (company-dabbrev-code company-gtags company-etags company-keywords)
      company-oddmuse company-files company-dabbrev)))
  '(helm-gtags-auto-update t)

@@ -57,7 +57,7 @@
     )
 
 
-
+(global-set-key [C-f1] 'show-file-name)
 (global-set-key [kp-delete] 'delete-char)
 ;;;;for neotree
 (global-set-key [(meta f11)] 'neotree-toggle)
