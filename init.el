@@ -19,10 +19,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (loop for file in (directory-files emacs-confs-dir t "\\.el")
       do (load file nil nil t))
-(if (string-equal system-type "windows-nt")
-    (progn
-      (require 'popwin)
-      (popwin-mode)))
 
 (if (string-equal system-type "darwin")
     (progn
@@ -43,15 +39,19 @@
  ;; If there is more than one, they won't work right.
  '(company-backends
    (quote
-    (company-gtags company-c-headers company-irony company-clang company-xcode company-cmake company-capf
-                   (company-dabbrev-code company-gtags company-etags company-keywords)
-                   company-oddmuse company-files company-dabbrev)))
+    ((company-keywords company-clang company-gtags)
+     company-gtags company-c-headers company-irony company-xcode company-cmake company-capf
+     (company-dabbrev-code company-gtags company-etags company-keywords)
+     company-oddmuse company-files company-dabbrev)))
  '(helm-gtags-auto-update t)
  '(helm-gtags-ignore-case t)
- '(helm-gtags-path-style (quote relative)))
+ '(helm-gtags-path-style (quote relative))
+ '(safe-local-variable-values
+   (quote
+    ((company-clang-arguments "-I./Classes" "-I./cocos2d" "-I./cocos2d/cocos" "-I./cocos2d/cocos/base" "-I./cocos2d/extensions")))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "DejaVu Sans Mono" :foundry "outline" :slant normal :weight normal :height 140 :width normal)))))
+ )
