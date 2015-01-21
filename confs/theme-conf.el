@@ -1,5 +1,3 @@
-(if (string-equal system-type "windows-nt")
-(load-theme 'solarized-dark t))
 (load-theme 'monokai t)
 (setq alpha-list '((95 95) (100 100)))
 ;;change the select background color

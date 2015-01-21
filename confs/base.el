@@ -153,8 +153,13 @@ Subsequent calls expands the selection to larger semantic unit."
  (defun current-file-name-nondirectory()
   (file-name-sans-extension (file-name-nondirectory (buffer-file-name)))
   )
-  
-  
+
+(defun remove-dos-eol()
+  "Do not show ^M in files containing mixed UNIX and DOS line endings."
+  (interactive)
+  (setq buffer-display-table (make-display-table))
+  (aset buffer-display-table ?\^M []))
+
 (set-selection-coding-system 'iso-2022-8bit-ss2-dos)
 (set-clipboard-coding-system 'iso-2022-8bit-ss2-dos)
 (provide 'base)

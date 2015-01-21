@@ -13,3 +13,4 @@ semanticdb/
 *.elc
 srecode-map.el
 ede-projects.el
+recentf
