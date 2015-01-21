@@ -159,7 +159,11 @@ Subsequent calls expands the selection to larger semantic unit."
   (interactive)
   (setq buffer-display-table (make-display-table))
   (aset buffer-display-table ?\^M []))
-
+(defun dos2unix ()
+  "Replace DOS eolns CR LF with Unix eolns CR"
+  (interactive)
+    (goto-char (point-min))
+      (while (search-forward "\r" nil t) (replace-match "")))
 (set-selection-coding-system 'iso-2022-8bit-ss2-dos)
 (set-clipboard-coding-system 'iso-2022-8bit-ss2-dos)
 (provide 'base)
