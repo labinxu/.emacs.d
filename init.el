@@ -1,4 +1,5 @@
 (require 'cl)
+(setq w32-pipe-read-delay 0)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defconst emacs-base-dir "~/.emacs.d/"
   "The root directory that all the extra plugin will put in")
@@ -31,7 +32,6 @@
 (setenv "PATH"
     (concat (getenv "PATH") ":" "/usr/local/bin" ":" "/opt/local/sbin" ":" "/opt/local/bin"))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -39,9 +39,7 @@
  ;; If there is more than one, they won't work right.
  '(company-backends
    (quote
-    ((company-keywords company-clang company-gtags company-c-headers)
-     company-gtags company-irony company-xcode company-cmake company-capf
-     (company-dabbrev-code company-gtags company-etags company-keywords)
+    ((company-irony company-c-headers company-capf company-gtags company-dabbrev company-keywords company-files)
      company-oddmuse company-files company-dabbrev)))
  '(helm-gtags-auto-update t)
  '(helm-gtags-ignore-case t)
