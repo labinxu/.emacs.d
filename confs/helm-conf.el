@@ -12,11 +12,10 @@
 (require 'helm-gtags)
 
 (setq
- helm-gtags-ignore-case t
  helm-gtags-auto-update t
  helm-gtags-use-input-at-cursor t
  helm-gtags-pulse-at-cursor t
- ;;helm-gtags-prefix-key "C-c g"
+ helm-gtags-prefix-key "C-c g"
  helm-gtags-suggested-key-mapping t
  )
 
@@ -27,7 +26,6 @@
 (add-hook 'c++-mode-hook 'helm-gtags-mode)
 (custom-set-variables
  '(helm-gtags-path-style 'relative)
- '(helm-gtags-ignore-case t)
  '(helm-gtags-auto-update t))
  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

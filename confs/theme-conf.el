@@ -1,4 +1,4 @@
-(load-theme 'monokai t)
+
 (setq alpha-list '((95 95) (100 100)))
 ;;change the select background color
 (set-face-attribute 'region nil :background "#483d8b")
@@ -22,14 +22,14 @@
 (cond
  ((string-equal system-type "windows-nt") ; Microsoft Windows
   (when (member "DejaVu Sans Mono" (font-family-list))
-    (add-to-list 'initial-frame-alist '(font . "DejaVu Sans Mono-10"))
-    (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-10"))
+    (add-to-list 'initial-frame-alist '(font . "DejaVu Sans Mono-11"))
+    (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-11"))
     )
   )
  ((string-equal system-type "darwin")   ; Mac OS X
   (when (member "DejaVu Sans Mono" (font-family-list))
-    (add-to-list 'initial-frame-alist '(font . "DejaVu Sans Mono-14"))
-    (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-14")))
+    (add-to-list 'initial-frame-alist '(font . "DejaVu Sans Mono-12"))
+    (add-to-list 'default-frame-alist '(font . "DejaVu Sans Mono-12")))
   )
  ((string-equal system-type "gnu/linux") ; linux
   (when (member "DejaVu Sans Mono" (font-family-list))
@@ -76,4 +76,13 @@
 (defun cycle-font-backward()
   (interactive)
   (cycle-font -1))
+;;(load-theme 'monokai t)
+(require 'color-theme-solarized)
+(color-theme-solarized)
+(add-hook 'after-make-frame-functions
+          (lambda (frame)
+            (set-frame-parameter frame
+                                 'background-mode
+                                 (if (display-graphic-p frame) 'light 'dark))
+            (enable-theme 'solarized)))
  ;;;To get a list of fonts in emacs, use (print (font-family-list))

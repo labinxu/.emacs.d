@@ -4,7 +4,8 @@
 
 ;; Author: Kelvin Smith <oneKelvinSmith@gmail.com>
 ;; URL: http://github.com/oneKelvinSmith/monokai-emacs
-;; Version: 0.2.0
+;; Version: 20141121.1202
+;; X-Original-Version: 0.2.0
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -129,7 +130,8 @@ Also affects 'linum-mode' background."
        (monokai-fg               "#F8F8F2")
        (monokai-bg               "#272822")
        (monokai-hl-line          "#3E3D31")
-       (monokai-hl               "#49483E")
+       ;;(monokai-hl               "#49483E")
+       (monokai-hl               "#606060")
        (monokai-emph             "#F8F8F0")
        (monokai-comments         "#75715E")
        ;; Adaptive higher/lower contrast accented colors
@@ -458,7 +460,7 @@ Also affects 'linum-mode' background."
                                     :foreground ,terminal-monokai-bg))))
 
    `(cua-rectangle
-    ((,class (:inherit region
+     ((,class (:inherit region
                         :background ,magenta
                         :foreground ,monokai-bg))
       (,terminal-class (:inherit region
@@ -850,9 +852,9 @@ Also affects 'linum-mode' background."
 
    `(font-lock-type-face
      ((,class (:foreground ,blue
-                           :italic nil))
+                           :italic t))
       (,terminal-class (:foreground ,terminal-blue
-                                    :italic nil))))
+                                    :italic t))))
 
    `(font-lock-variable-name-face
      ((,class (:foreground ,orange))

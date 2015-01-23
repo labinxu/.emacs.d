@@ -20,3 +20,16 @@
 (global-set-key [f4] 'highlight-symbol-next)
 (global-set-key [(shift f4)] 'highlight-symbol-prev)
 (global-set-key [(meta f4)] 'highlight-symbol-query-replace)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(require 'highlight-tail)
+
+(setq highlight-tail-colors
+           '(("#696969" . 0)
+            ("black" . 50)
+            ("#191970". 80)))
+
+(setq highlight-tail-steps 14
+      highlight-tail-timer 1)
+(setq highlight-tail-posterior-type 'const)
+(highlight-tail-mode)

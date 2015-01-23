@@ -70,7 +70,7 @@
             (indent-for-tab-command)))))
 
 (global-set-key [tab] 'tab-indent-or-complete)
-  
+
 (require 'company-c-headers)
 (add-to-list 'company-backends 'company-c-headers)
 (add-to-list 'company-c-headers-path-system "/usr/include")
@@ -80,3 +80,13 @@
 (add-to-list 'company-c-headers-path-system "C:/MinGW/msys/1.0/include")
 (add-to-list 'company-c-headers-path-system "C:/MinGW/lib/gcc/mingw32/4.8.1/include/c++")
 (add-to-list 'company-c-headers-path-system ".")
+
+(require 'color)
+
+(let ((bg (face-attribute 'default :background)))
+  (custom-set-faces
+   `(company-tooltip ((t (:inherit default :background ,(color-lighten-name bg 2)))))
+   `(company-scrollbar-bg ((t (:background ,(color-lighten-name bg 10)))))
+   `(company-scrollbar-fg ((t (:background ,(color-lighten-name bg 5)))))
+   `(company-tooltip-selection ((t (:inherit font-lock-function-name-face))))
+   `(company-tooltip-common ((t (:inherit font-lock-constant-face))))))
