@@ -10,9 +10,8 @@
 
 (require 'highlight-indentation)
 (add-hook 'c++-mode-hook 'highlight-indentation-mode)
-(add-hook 'c-mode-hook 'highlight-parentheses-mode)
-(add-hook 'python-mode-hook 'highlight-parentheses-mode)
 
+(require 'auto-highlight-symbol-config)
 
 (require 'highlight-symbol)
 (setq highlight-symbol-colors '("DarkOrange" "DodgerBlue1" "DeepPink1"))
@@ -33,3 +32,4 @@
       highlight-tail-timer 1)
 (setq highlight-tail-posterior-type 'const)
 (highlight-tail-mode)
+(require 'font-lock+)

@@ -85,4 +85,3 @@
                                  'background-mode
                                  (if (display-graphic-p frame) 'light 'dark))
             (enable-theme 'solarized)))
- ;;;To get a list of fonts in emacs, use (print (font-family-list))
