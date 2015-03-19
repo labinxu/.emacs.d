@@ -37,19 +37,28 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(column-number-mode t)
  '(company-backends
    (quote
-    ((company-irony company-c-headers company-capf company-gtags company-dabbrev company-keywords company-files)
+    ((company-irony company-c-headers company-capf company-gtags company-dabbrev-code company-keywords company-files company-abbrev)
      company-oddmuse company-files company-dabbrev)))
+ '(display-time-mode t)
  '(helm-gtags-auto-update t)
  '(helm-gtags-ignore-case t)
  '(helm-gtags-path-style (quote relative))
  '(safe-local-variable-values
    (quote
-    ((company-clang-arguments "-I./Classes" "-I./cocos2d" "-I./cocos2d/cocos" "-I./cocos2d/cocos/base" "-I./cocos2d/extensions")))))
+    ((company-clang-arguments "-I./Classes" "-I./cocos2d" "-I./cocos2d/cocos" "-I./cocos2d/cocos/base" "-I./cocos2d/extensions"))))
+ '(tool-bar-mode nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(company-scrollbar-bg ((t (:background "#ffffff"))))
+ '(company-scrollbar-fg ((t (:background "#ffffff"))))
+ '(company-tooltip ((t (:inherit default :background "#ffffff"))))
+ '(company-tooltip-common ((t (:inherit font-lock-constant-face))))
+ '(company-tooltip-selection ((t (:inherit font-lock-function-name-face))))
+ '(mode-line ((t (:foreground "#0000cd" :background "#27408b" :box nil))))
+ '(mode-line-inactive ((t (:foreground "#836fff" :background "#262626" :box nil)))))

@@ -12,9 +12,10 @@
 (add-hook 'irony-mode-hook 'company-irony-setup-begin-commands)
 
 (add-hook 'after-init-hook 'global-company-mode)
-(setq company-idle-delay 0.1)
+(setq company-idle-delay 0.2)
+(setq company-auto-complete t)
 (setq company-minimum-prefix-length 1)
-;;(setq company-begin-commands '(self-insert-command))
+(setq company-begin-commands '(self-insert-command))
 (dolist (hook (list
                'emacs-lisp-mode-hook
                'lisp-mode-hook
@@ -74,6 +75,7 @@
 (require 'company-c-headers)
 (add-to-list 'company-backends 'company-c-headers)
 (add-to-list 'company-c-headers-path-system "/usr/include")
+(add-to-list 'company-c-headers-path-system "/include/c++/3.4.5")
 (add-to-list 'company-c-headers-path-system "/usr/include/c++/4.2.1")
 (add-to-list 'company-c-headers-path-system ".")
 (add-to-list 'company-c-headers-path-system "C:/MinGW/include")

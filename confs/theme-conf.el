@@ -85,17 +85,3 @@
                                  'background-mode
                                  (if (display-graphic-p frame) 'light 'dark))
             (enable-theme 'solarized)))
-(require 'powerline)
-(defun graphic-powerline-config ()
-  "powerline setting for graphic"
-  (interactive)
-  (progn
-   (setq powerline-arrow-shape 'arrow)
-   (custom-set-faces
-    '(mode-line ((t (:foreground "#0000cd" :background "#27408b" :box nil))))
-    '(mode-line-inactive ((t (:foreground "#836fff" :background "#262626" :box nil))))
-    )
-   (setq powerline-color1 "#0088cc")
-   (setq powerline-color2 "#00008b")))
-(powerline-default-theme)
-(graphic-powerline-config)
