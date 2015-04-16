@@ -3,8 +3,10 @@
 (global-set-key (kbd "C-c \\") 'comment-indent) ;
 (require 'recent-jump)
 (recent-jump-mode t)
-(global-set-key (kbd "C-c C-,") 'recent-jump-forward)
-(global-set-key (kbd "C-c C-.") 'recent-jump-backward)
+;;(global-set-key (kbd "C-c C-,") 'recent-jump-forward)
+;;(global-set-key (kbd "C-c C-.") 'recent-jump-backward)
+(global-set-key [134217821] (quote recent-jump-forward))
+(global-set-key [134217819] (quote recent-jump-backward))
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'window-numbering)
 (window-numbering-mode t)
@@ -20,6 +22,7 @@
 (global-set-key (kbd "C-c C-w") 'kill-region)
 (global-set-key (kbd "C-c M-w") 'xah-copy-line-or-region)
 (global-set-key (kbd "C-c M-x") 'xah-cut-line-or-region)
+(require 'expand-region)
 (global-set-key (kbd "C-=") 'er/expand-region)
 
 (global-set-key (kbd "C-c c w") 'copy-symbol-at-point)

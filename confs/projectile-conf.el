@@ -1,8 +1,11 @@
 (require 'projectile)
 (projectile-global-mode)
 (setq projectile-enable-caching t)
-(setq projectile-indexing-method 'alien)
+;;(setq projectile-indexing-method 'alien)
+(setq projectile-indexing-method 'native)
 (setq projectile-require-project-root nil)
+
 ;;(require 'grizzl)
 ;;(setq projectile-completion-system 'grizzl)
 ;;(setq projectile-completion-system 'default)
+(setq projectile-git-command "git-ls-all-files")

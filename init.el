@@ -30,7 +30,9 @@
       (add-to-list 'exec-path "/usr/local/bin")
       ))
 (setenv "PATH"
-    (concat (getenv "PATH") ":" "/usr/local/bin" ":" "/opt/local/sbin" ":" "/opt/local/bin"))
+        (concat (getenv "PATH") ":" "/usr/local/bin" ":" "/opt/local/sbin" ":" "/opt/local/bin"))
+(setenv "ANDROID_HOME"
+        "C:/apps/adt-bundle-windows-x86_64-20130729/sdk")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -40,8 +42,9 @@
  '(column-number-mode t)
  '(company-backends
    (quote
-    ((company-irony company-c-headers company-capf company-gtags company-dabbrev-code company-keywords company-files company-abbrev)
-     company-oddmuse company-files company-dabbrev)))
+    (company-irony company-c-headers company-bbdb company-nxml company-css company-eclim company-clang company-xcode company-cmake company-capf
+                   (company-dabbrev-code company-gtags company-etags company-keywords)
+                   company-oddmuse company-files company-dabbrev)))
  '(display-time-mode t)
  '(helm-gtags-auto-update t)
  '(helm-gtags-ignore-case t)
