@@ -1,6 +1,6 @@
 ;;; helm-misc.el --- Various functions for helm -*- lexical-binding: t -*-
 
-;; Copyright (C) 2012 ~ 2014 Thierry Volpiatto <thierry.volpiatto@gmail.com>
+;; Copyright (C) 2012 ~ 2015 Thierry Volpiatto <thierry.volpiatto@gmail.com>
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -141,21 +141,16 @@ current local map, current global map, and all current minor maps."
     (lacarte-get-overall-menu-item-alist maps)))
 
 ;;;###autoload
-(defun helm-browse-menubar (arg)
-  "Helm interface to the menubar using lacarte.el.
-With no prefix arg call the local current major-mode menu,
-with one prefix arg call the global menu,
-with two prefix args call the menu for the possible minor-mode in effect."
-  (interactive "P")
+(defun helm-browse-menubar ()
+  "Helm interface to the menubar using lacarte.el."
+  (interactive)
   (require 'lacarte)
-  (helm :sources (helm-make-source "Lacarte" 'helm-lacarte
-                   :candidates (lambda ()
-                                 (helm-lacarte-get-candidates
-                                  (cond ((equal arg '(4))
-                                         '(global))
-                                        ((equal arg '(16))
-                                         '(minor))
-                                        (t '(local))))))
+  (helm :sources (mapcar 
+                  (lambda (spec) (helm-make-source (car spec) 'helm-lacarte
+                              :candidates (lambda () (helm-lacarte-get-candidates (cdr spec)))))
+                  '(("Major Mode"  . (local))
+                    ("Minor Modes" . (minor))
+                    ("Global Map"  . (global))))
         :buffer "*helm lacarte*"))
 
 (defun helm-call-interactively (cmd-or-name)
@@ -176,22 +171,22 @@ It is added to `extended-command-history'.
 ;;
 ;;
 (defvar helm-source-minibuffer-history
-  '((name . "Minibuffer History")
-    (header-name . (lambda (name)
-                     (format "%s (%s)" name minibuffer-history-variable)))
-    (candidates
-     . (lambda ()
-         (let ((history (cl-loop for i in
-                              (symbol-value minibuffer-history-variable)
-                              unless (string= "" i) collect i)))
-           (if (consp (car history))
-               (mapcar 'prin1-to-string history)
-             history))))
-    (migemo)
-    (multiline)
-    (action . (lambda (candidate)
-                (delete-minibuffer-contents)
-                (insert candidate)))))
+  (helm-build-sync-source "Minibuffer History"
+    :header-name (lambda (name)
+                   (format "%s (%s)" name minibuffer-history-variable))
+    :candidates
+     (lambda ()
+       (let ((history (cl-loop for i in
+                               (symbol-value minibuffer-history-variable)
+                               unless (string= "" i) collect i)))
+         (if (consp (car history))
+             (mapcar 'prin1-to-string history)
+             history)))
+    :migemo t
+    :multiline t
+    :action (lambda (candidate)
+              (delete-minibuffer-contents)
+              (insert candidate))))
 
 ;;; Shell history
 ;;
@@ -292,7 +287,6 @@ It is added to `extended-command-history'.
   (helm-other-buffer 'helm-source-stumpwm-commands
                      "*helm stumpwm commands*"))
 
-
 ;;;###autoload
 (defun helm-mini ()
   "Preconfigured `helm' lightweight version \(buffer -> recentf\)."
@@ -302,15 +296,17 @@ It is added to `extended-command-history'.
     (setq helm-source-buffers-list
           (helm-make-source "Buffers" 'helm-source-buffers)))
   (let ((helm-ff-transformer-show-only-basename nil))
-    (helm-other-buffer helm-mini-default-sources "*helm mini*")))
+    (helm :sources helm-mini-default-sources
+          :buffer "*helm mini*"
+          :truncate-lines t)))
 
 ;;;###autoload
 (defun helm-minibuffer-history ()
   "Preconfigured `helm' for `minibuffer-history'."
   (interactive)
   (let ((enable-recursive-minibuffers t))
-    (helm-other-buffer 'helm-source-minibuffer-history
-                       "*helm minibuffer-history*")))
+    (helm :sources 'helm-source-minibuffer-history
+          :buffer "*helm minibuffer-history*")))
 
 ;;;###autoload
 (defun helm-comint-input-ring ()

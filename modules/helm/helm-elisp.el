@@ -1,6 +1,6 @@
 ;;; helm-elisp.el --- Elisp symbols completion for helm. -*- lexical-binding: t -*-
 
-;; Copyright (C) 2012 ~ 2014 Thierry Volpiatto <thierry.volpiatto@gmail.com>
+;; Copyright (C) 2012 ~ 2015 Thierry Volpiatto <thierry.volpiatto@gmail.com>
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -118,7 +118,8 @@ fuzzy completion is not available in `completion-at-point'."
 (defun helm-show-completion ()
   (with-helm-current-buffer
     (overlay-put helm-show-completion-overlay
-                 'display (helm-get-selection))))
+                 'display (substring-no-properties
+                           (helm-get-selection)))))
 
 (defun helm-show-completion-init-overlay (beg end)
   (when (and helm-turn-on-show-completion beg end)
@@ -400,18 +401,30 @@ Filename completion happen if string start after or between a double quote."
 (defun helm-apropos-init (test default)
   "Init candidates buffer for `helm-apropos' sources."
   (require 'helm-help)
+  (helm-init-candidates-in-buffer 'global
+    (let ((default-symbol (and (stringp default)
+                               (intern-soft default)))
+          (symbols (all-completions "" obarray test)))
+      (if (and default-symbol (funcall test default-symbol))
+          (cons default-symbol symbols)
+        symbols))))
+
+(defun helm-apropos-init-faces (default)
+  "Init candidates buffer for faces for `helm-apropos'."
+  (require 'helm-help)
   (with-current-buffer (helm-candidate-buffer 'global)
     (goto-char (point-min))
     (let ((default-symbol (and (stringp default)
-                               (intern-soft default))))
-      (when (and default-symbol (funcall test default-symbol))
+                               (intern-soft default)))
+          (faces (face-list)))
+      (when (and default-symbol (facep default-symbol))
         (insert (concat default "\n")))
-      (cl-loop with all = (all-completions "" obarray test)
-            for sym in all
-            for s = (intern sym)
-            unless (or (and default (string= sym default))
-                       (keywordp s))
-            do (insert (concat sym "\n"))))))
+      (insert
+       (mapconcat #'prin1-to-string
+                  (if default
+                      (cl-remove-if (lambda (sym) (string= sym default)) faces)
+                    faces)
+                  "\n")))))
 
 (defun helm-apropos-default-sort-fn (candidates _source)
   (if (string= helm-pattern "")
@@ -421,7 +434,8 @@ Filename completion happen if string start after or between a double quote."
 (defun helm-def-source--emacs-variables (&optional default)
   (helm-build-in-buffer-source "Variables"
     :init `(lambda ()
-             (helm-apropos-init 'boundp ,default))
+             (helm-apropos-init
+              (lambda (x) (and (boundp x) (not (keywordp x)))) ,default))
     :fuzzy-match helm-apropos-fuzzy-match
     :filtered-candidate-transformer (and (null helm-apropos-fuzzy-match)
                                          'helm-apropos-default-sort-fn)
@@ -433,8 +447,7 @@ Filename completion happen if string start after or between a double quote."
 
 (defun helm-def-source--emacs-faces (&optional default)
   (helm-build-in-buffer-source "Faces"
-    :init `(lambda ()
-             (helm-apropos-init 'facep ,default))
+    :init (lambda () (helm-apropos-init-faces default))
     :fuzzy-match helm-apropos-fuzzy-match
     :filtered-candidate-transformer
     (append (and (null helm-apropos-fuzzy-match)
@@ -672,6 +685,72 @@ Filename completion happen if string start after or between a double quote."
       (coerce . helm-symbolify))
   "Variable.")
 
+(define-helm-type-attribute 'timer
+    '((action
+       ("Cancel Timer" . (lambda (_timer)
+                           (let ((mkd (helm-marked-candidates)))
+                             (cl-loop for timer in mkd
+                                   do (cancel-timer timer)))))
+       ("Describe Function" . (lambda (tm) (describe-function (timer--function tm))))
+       ("Find Function" . (lambda (tm) (find-function (timer--function tm)))))
+      (persistent-action . (lambda (tm) (describe-function (timer--function tm))))
+      (persistent-help . "Describe Function"))
+  "Timer.")
+
+
+;;; Elisp Timers.
+;;
+;;
+(defclass helm-absolute-time-timers-class (helm-source-sync helm-type-timers)
+  ((candidates :initform timer-list)
+   (filtered-candidate-transformer
+    :initform
+    (lambda (candidates _source)
+      (cl-loop for timer in candidates
+               collect (cons (helm-elisp--format-timer timer) timer))))
+   (allow-dups :initform t)
+   (volatile :initform t)))
+
+(defvar helm-source-absolute-time-timers
+  (helm-make-source "Absolute Time Timers" 'helm-absolute-time-timers-class))
+
+(defclass helm-idle-time-timers-class (helm-source-sync helm-type-timers)
+  ((candidates :initform timer-idle-list)
+   (allow-dups :initform t)
+   (volatile :initform t)
+   (filtered-candidate-transformer
+    :initform
+    (lambda (candidates _source)
+      (cl-loop for timer in candidates
+               collect (cons (helm-elisp--format-timer timer) timer))))))
+
+(defvar helm-source-idle-time-timers
+  (helm-make-source "Idle Time Timers" 'helm-idle-time-timers-class))
+
+(defun helm-elisp--format-timer (timer)
+  (format "%s repeat=%s %s(%s)"
+          (let ((time (timer--time timer)))
+            (if (timer--idle-delay timer)
+                (format-time-string "idle-for=%5s" time)
+              (format-time-string "%m/%d %T" time)))
+          (or (timer--repeat-delay timer) "nil")
+          (mapconcat 'identity (split-string
+                                (prin1-to-string (timer--function timer))
+                                "\n") " ")
+          (mapconcat 'prin1-to-string (timer--args timer) " ")))
+
+;;;###autoload
+(defun helm-timers ()
+  "Preconfigured `helm' for timers."
+  (interactive)
+  (helm :sources '(helm-source-absolute-time-timers
+                   helm-source-idle-time-timers)
+        :buffer "*helm timers*"))
+
+
+;;; Complex command history
+;;
+;;
 (defun helm-btf--usable-p ()
   "Return t if current version of `backtrace-frame' accept 2 arguments."
   (condition-case nil
@@ -700,7 +779,7 @@ Filename completion happen if string start after or between a double quote."
              (eq 'helm-sexp-eval-1
                  (cadr (backtrace-frame (+ i 2) #'called-interactively-p)))
              1))
-      
+
       (defun helm-sexp-eval (_candidate)
         (call-interactively #'helm-sexp-eval-1)))
   ;; Emacs 24.3
@@ -713,91 +792,25 @@ Filename completion happen if string start after or between a double quote."
         (error (message "Evaluating gave an error: %S" err)
                nil)))))
 
-(define-helm-type-attribute 'sexp
-    '((action
-       ("Eval" . (lambda (candidate)
-                   (and (boundp 'helm-sexp--last-sexp)
-                        (setq helm-sexp--last-sexp candidate))
-                   (helm-run-after-quit 'helm-sexp-eval candidate)))
-       ("Edit and eval" .
-        (lambda (cand)
-          (minibuffer-with-setup-hook
-              (lambda () (insert cand))
-            (call-interactively #'eval-expression)))))
-      (persistent-action . helm-sexp-eval))
-  "Sexp.")
-
-(define-helm-type-attribute 'timer
-    '((action
-       ("Cancel Timer" . (lambda (_timer)
-                           (let ((mkd (helm-marked-candidates)))
-                             (cl-loop for timer in mkd
-                                   do (cancel-timer timer)))))
-       ("Describe Function" . (lambda (tm) (describe-function (timer--function tm))))
-       ("Find Function" . (lambda (tm) (find-function (timer--function tm)))))
-      (persistent-action . (lambda (tm) (describe-function (timer--function tm))))
-      (persistent-help . "Describe Function"))
-  "Timer.")
-
-
-;;; Elisp Timers.
-;;
-;;
-(defvar helm-source-absolute-time-timers
-  '((name . "Absolute Time Timers")
-    (candidates . timer-list)
-    (filtered-candidate-transformer
-     . (lambda (candidates _source)
-         (cl-loop for timer in candidates
-               collect (cons (helm-elisp--format-timer timer) timer))))
-    (allow-dups)
-    (volatile)
-    (type . timer)))
-
-(defvar helm-source-idle-time-timers
-  '((name . "Idle Time Timers")
-    (candidates . timer-idle-list)
-    (allow-dups)
-    (volatile)
-    (filtered-candidate-transformer
-     . (lambda (candidates _source)
-         (cl-loop for timer in candidates
-               collect (cons (helm-elisp--format-timer timer) timer))))
-    (type . timer)))
-
-(defun helm-elisp--format-timer (timer)
-  (format "%s repeat=%s %s(%s)"
-          (let ((time (timer--time timer)))
-            (if (timer--idle-delay timer)
-                (format-time-string "idle-for=%5s" time)
-              (format-time-string "%m/%d %T" time)))
-          (or (timer--repeat-delay timer) "nil")
-          (mapconcat 'identity (split-string
-                                (prin1-to-string (timer--function timer))
-                                "\n") " ")
-          (mapconcat 'prin1-to-string (timer--args timer) " ")))
-
-;;;###autoload
-(defun helm-timers ()
-  "Preconfigured `helm' for timers."
-  (interactive)
-  (helm-other-buffer '(helm-source-absolute-time-timers
-                       helm-source-idle-time-timers)
-                     "*helm timers*"))
-
-
-;;; Complex command history
-;;
-;;
 (defvar helm-source-complex-command-history
-  '((name . "Complex Command History")
-    (candidates . (lambda ()
-                    ;; Use cdr to avoid adding
-                    ;; `helm-complex-command-history' here.
-                    (cl-loop for i in command-history
-                          unless (equal i '(helm-complex-command-history))
-                          collect (prin1-to-string i))))
-    (type . sexp)))
+  (helm-build-sync-source "Complex Command History"
+    :candidates (lambda ()
+                  ;; Use cdr to avoid adding
+                  ;; `helm-complex-command-history' here.
+                  (cl-loop for i in command-history
+                           unless (equal i '(helm-complex-command-history))
+                           collect (prin1-to-string i)))
+    :action (helm-make-actions
+             "Eval" (lambda (candidate)
+                      (and (boundp 'helm-sexp--last-sexp)
+                           (setq helm-sexp--last-sexp candidate))
+                      (run-with-timer 0.1 nil #'helm-sexp-eval candidate))
+             "Edit and eval"
+             (lambda (cand)
+               (minibuffer-with-setup-hook
+                   (lambda () (insert cand))
+                 (call-interactively #'eval-expression))))
+    :persistent-action #'helm-sexp-eval))
 
 ;;;###autoload
 (defun helm-complex-command-history ()
