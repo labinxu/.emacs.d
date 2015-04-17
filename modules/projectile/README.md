@@ -1,8 +1,12 @@
 [![License GPL 3][badge-license]](http://www.gnu.org/licenses/gpl-3.0.txt)
+[![MELPA](http://melpa.org/packages/projectile-badge.svg)](http://melpa.org/#/projectile)
+[![MELPA Stable](http://stable.melpa.org/packages/projectile-badge.svg)](http://stable.melpa.org/#/projectile)
 [![Build Status](https://travis-ci.org/bbatsov/projectile.png?branch=master)](https://travis-ci.org/bbatsov/projectile)
-[![Gittip](http://img.shields.io/gittip/bbatsov.svg)](https://www.gittip.com/bbatsov/)
+[![Gratipay](http://img.shields.io/gratipay/bbatsov.svg)](https://www.gratipay.com/bbatsov/)
 
 ## Synopsis
+
+[![Join the chat at https://gitter.im/bbatsov/projectile](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/bbatsov/projectile?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 **Projectile** is a project interaction library for Emacs. Its goal is to
 provide a nice set of features operating on a project level without
@@ -29,7 +33,7 @@ it. Some of Projectile's features:
 * jump to a file in a directory
 * jump to a project buffer
 * jump to a test in project
-* toggle between files with same names but different extensions (i.e. .h <-> .c/.cpp, Gemfile <-> Gemfile.lock...)
+* toggle between files with same names but different extensions (e.g. `.h` <-> `.c/.cpp`, `Gemfile` <-> `Gemfile.lock`)
 * toggle between code and its test
 * jump to recently visited files in the project
 * switch between projects you have worked on
@@ -37,13 +41,17 @@ it. Some of Projectile's features:
 * replace in project
 * multi-occur in project buffers
 * grep in project
-* regenerate project etags or gtags (requires [gtags](https://github.com/leoliu/ggtags)).
+* regenerate project etags or gtags (requires [ggtags](https://github.com/leoliu/ggtags)).
 * visit project in dired
 * run make in a project with a single key chord
 
 Here's a glimpse of Projectile in action:
 
-![Projectile Screenshot](https://github.com/bbatsov/projectile/raw/master/screenshots/projectile.png)
+![Projectile Screenshot](screenshots/projectile.png)
+
+You can support my work on Projectile and [all my other projects](https://github.com/bbatsov) via [gratipay](https://www.gratipay.com/bbatsov).
+
+[![Support via Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.1.3/dist/gratipay.png)](https://gratipay.com/bbatsov)
 
 ## Installation
 
@@ -117,7 +125,7 @@ To force the use of external indexing in Windows:
 (setq projectile-indexing-method 'alien)
 ```
 
-This can speed up Projectile in Windows significantly. The disadvantage of this 
+This can speed up Projectile in Windows significantly. The disadvantage of this
 method is that it's not well supported on Windows systems. If there's problem,
 you can always use native indexing mode.
 
@@ -195,12 +203,6 @@ When running `projectile-switch-project` (<kbd>C-c p p</kbd>) Projectile invokes
 the command specified in `projectile-switch-project-action` (by default it is
 `projectile-find-file`).
 
-When `projectile-remember-window-configs` is `t` (default is `nil`), the most
-recent window configuration of the target project is restored instead of calling
-`projectile-switch-project-action`.  If the target project has no window
-configuration in the current editing session, `projectile-switch-project-action`
-is otherwise invoked as described above.
-
 Depending on your personal workflow and habits, you
 may prefer to alter the value of `projectile-switch-project-action`:
 
@@ -216,7 +218,7 @@ will be added in the future.
 ###### `projectile-find-file-in-known-projects`
 
 Similar to `projectile-find-file` but lists all files in all known projects. Since
-the total number of fils could be huge, it is beneficial to enable caching for subsequent
+the total number of files could be huge, it is beneficial to enable caching for subsequent
 usages.
 
 ###### `projectile-find-file-dwim`
@@ -292,7 +294,7 @@ Another completion option is [grizzl](https://github.com/d11wtq/grizzl):
 (setq projectile-completion-system 'grizzl)
 ```
 
-![Projectile Screenshot](https://github.com/bbatsov/projectile/raw/master/screenshots/projectile-grizzl.png)
+![Projectile Screenshot](screenshots/projectile-grizzl.png)
 
 `grizzl`'s advantage is that it provides good fuzzy completion
 (compared to `ido`'s less than stellar built-in flex matching, but inferior to `ido-flx`).
@@ -363,7 +365,6 @@ Keybinding         | Description
 <kbd>C-c p k</kbd> | Kills all project buffers.
 <kbd>C-c p D</kbd> | Opens the root of the project in `dired`.
 <kbd>C-c p e</kbd> | Shows a list of recently visited project files.
-<kbd>C-c p s a</kbd> | Runs `ack` on the project. Requires the presence of `ack-and-a-half`.
 <kbd>C-c p s s</kbd> | Runs `ag` on the project. Requires the presence of `ag.el`.
 <kbd>C-c p !</kbd> | Runs `shell-command` in the root directory of the project.
 <kbd>C-c p &</kbd> | Runs `async-shell-command` in the root directory of the project.
@@ -605,6 +606,10 @@ these are the supported commands:
 * `helm-projectile-find-dir`
 * `helm-projectile-recentf`
 * `helm-projectile-switch-to-buffer`
+* `helm-projectile-grep` (can be used for both grep or ack)
+* `helm-projectile-ag`
+* Replace Helm equivalent commands in `projectile-commander`
+* A virtual directory manager that is unique to Helm Projectile
 
 Why should you use these commands compared with the normal Projectile commands, even
 if the normal commands use `helm` as `projectile-completion-system`? The answer is,
@@ -617,25 +622,28 @@ If you want to use these commands, you have to activate it to replace the normal
 commands:
 
 ```lisp
+;; (setq helm-projectile-fuzzy-match nil)
 (require 'helm-projectile)
 (helm-projectile-on)
 ```
 
 If you already activate helm-projectile key bindings and you don't like it, you can turn it off
-and use the normal Projectile bindings with command `helm-projectile-off`.
+and use the normal Projectile bindings with command `helm-projectile-off`. Similarly, if you want to
+disable fuzzy matching in Helm Projectile (it is enabled by default), you must set `helm-projectile-fuzzy-match`
+to nil before loading `helm-projectile`.
 
 To fully learn Helm Projectile and see what it is capable of, you should refer to this guide:
 [Exploring large projects with Projectile and Helm Projectile](http://tuhdo.github.io/helm-projectile.html).
 
 Obviously you need to have Helm installed for this to work :-)
 
-![Helm-Projectile Screenshot](https://github.com/bbatsov/projectile/raw/master/screenshots/helm-projectile.png)
+![Helm-Projectile Screenshot](screenshots/helm-projectile.png)
 
 ### Work with Perspective Mode
 
 [Perspective](https://github.com/nex3/perspective-el) is a minor mode
 that provides the ability to manage different workspaces. If you need
-to open many projects at the same time, prerspective can help you keep
+to open many projects at the same time, perspective can help you keep
 each project related buffers and windows setting separate from other
 projects, similar to multiple spaces on MacOS, which allows you to
 focus on the files of the current active project.
@@ -643,14 +651,14 @@ focus on the files of the current active project.
 A picture says a thousand words. See below screenshot to get a concrete idea.
 
 Only current project related files showing in minibuffer when I call
-`ido-swith-buffer`, and an indicator in mode line tells me which
+`ido-switch-buffer`, and an indicator in mode line tells me which
 project that I'm in.
 
-![Persp-Projectile Screenshot 1](https://github.com/bbatsov/projectile/raw/master/screenshots/persp-projectile1.png)
+![Persp-Projectile Screenshot 1](screenshots/persp-projectile1.png)
 
 When I switch to a different project, I get a clean 'perspective'.
 
-![Persp-Projectile Screenshot 2](https://github.com/bbatsov/projectile/raw/master/screenshots/persp-projectile2.png)
+![Persp-Projectile Screenshot 2](screenshots/persp-projectile2.png)
 
 To integrate perspective with projectile, first of all, you need to
 install perspective. You can install it by:
@@ -752,9 +760,9 @@ Run all tests with:
 $ make test
 ```
 
-I'm also accepting financial contributions via [gittip](https://www.gittip.com/bbatsov).
+You can also support my work on Projectile and [all my other projects](https://github.com/bbatsov) via [gratipay](https://www.gratipay.com/bbatsov).
 
-[![Support via Gittip](https://rawgithub.com/twolfson/gittip-badge/0.2.0/dist/gittip.png)](https://www.gittip.com/bbatsov)
+[![Support via Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.1.3/dist/gratipay.png)](https://gratipay.com/bbatsov)
 
 ## Changelog
 

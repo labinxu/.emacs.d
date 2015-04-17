@@ -1,10 +1,13 @@
-```
- _____                            _   _      _
-| ____|_ __ ___   __ _  ___ ___  | | | | ___| |_ __ ___
-|  _| | '_ ` _ \ / _` |/ __/ __| | |_| |/ _ \ | '_ ` _ \
-| |___| | | | | | (_| | (__\__ \ |  _  |  __/ | | | | | |
-|_____|_| |_| |_|\__,_|\___|___/ |_| |_|\___|_|_| |_| |_|
-```
+[![License GPL 3][badge-license]](http://www.gnu.org/licenses/gpl-3.0.txt)
+[![MELPA](http://melpa.org/packages/helm-badge.svg)](http://melpa.org/#/helm)
+[![MELPA Stable](http://stable.melpa.org/packages/helm-badge.svg)](http://stable.melpa.org/#/helm)
+[![Gratipay](http://img.shields.io/gratipay/thierryvolpiatto.svg)](https://www.gratipay.com/thierryvolpiatto/)
+
+Emacs-helm
+==========
+
+You can  [![Support via Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.1.3/dist/gratipay.png)](https://gratipay.com/thierryvolpiatto) or [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=thierry.volpiatto@gmail.com&lc=US&currency_code=EUR&bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted) to help this project.
+
 
 ## Abstract
 
@@ -12,7 +15,7 @@
 Emacs. It will help steer you in the right direction when you're looking
 for stuff in Emacs (like buffers, files, etc).
 
-Helm is a fork of `anything.el` originaly written by Tamas Patrovic
+Helm is a fork of `anything.el` originally written by Tamas Patrovic
 and can be considered to be its successor. 
 `Helm` sets out to clean up the legacy code in `anything.el`
 and provide a cleaner, leaner and more modular tool, that's not tied in
@@ -66,8 +69,10 @@ _NOTE:_ That this will not work on Windows systems.
 
 ### Install from Emacs packaging system
 
-Helm is now available on Melpa at `http://melpa.milkbox.net/`
+Helm is now available on Melpa at http://melpa.org/
 You will find there instructions to install.
+See also https://github.com/milkypostman/melpa#usage to startup correctly
+with the emacs packaging system.
 Then you should need only in your init file:
 
 ```elisp
@@ -95,21 +100,36 @@ Some people are installing `helm` with their own config using diverses `require`
 and other hacks, not using `helm-config`.
 Expect failures and slowdown at startup unless you really know what you are doing when you do so.
 
-### Emacs Prelude
+### Configuration
 
-If you're afraid to play with Emacs's configuration, but want to try
-out Helm - have NO FEAR. Have a look at
-[Emacs Prelude](https://github.com/bbatsov/prelude) - it has
-Helm built-in and properly set-up.
+For a minimal helm configuration, run the startup script `./emacs-helm.sh`
+and look at the file `/tmp/helm-cfg.el`.
+
+The full configuration I use (helm maintainer) can be found [here](https://github.com/thierryvolpiatto/emacs-tv-config/blob/master/init-helm-thierry.el).
+
+Don't hesitate also to visit all helm customizable variables with the customize interface.
+Enabling `helm-mode` will give you completion in the diverse customize commands.
+
+Also you will find some packages like [Emacs Prelude](https://github.com/bbatsov/prelude) that
+have Helm built-in and properly set-up.
 
 ### Basic usage
 
-Just type `M-x helm-mini` and enjoy. You might want to bind that command to
-a keyboard shortcut. Here's a suggestion:
+Just type `M-x helm-M-x RET helm-`, you will have completion on all helm commands.
 
-```elisp
-(global-set-key (kbd "C-c h") 'helm-mini)
-```
+You can bind this to `M-x` like this:
+
+`(global-set-key (kbd "M-x") 'helm-M-x)`
+
+- _IMPORTANT:_
+
+Once you are in the helm session (of `helm-M-x` or any one else) you can hit either `C-h m` or
+`C-c ?`, the former is will popup a general info buffer about helm while the second will
+popup a specialized info of the current source you are into.
+Sometime `C-c ?` is not available, in this case you will see in mode-line `C-h m` instead of `C-c ?`.
+PLEASE USE and ABUSE of these `helm` embeded infos before reporting a bug about how to do things
+in `helm`, you will find also useful infos in mode-line.
+
 You can also start with `M-x helm-mode` and enjoy helm completion in your favourites
 Emacs commands (e.g `M-x`, `C-x C-f`, etc...).
 You can enable this by adding in your init file:
@@ -118,8 +138,16 @@ You can enable this by adding in your init file:
 (helm-mode 1)
 ```
 
+- _NOTE_ that the helmized emacs commands are different and much more basics than the helm ones.
+
 As a startup point you can also look at the helm section in Emacs menu to
 discover some of the commands provided by helm.
+
+For those who have a system able to run shell scripts, a convenient way to discover helm
+is to run `./emacs-helm.sh` from the helm directory, you will find interesting infos in
+your scratch buffer.
+`emacs-helm.sh` accept all emacs command line options, see `emacs-helm.sh -h` for more
+infos.
 
 ### Advanced usage
 
@@ -140,12 +168,48 @@ You can read [this guide](http://tuhdo.github.io/helm-intro.html) to quickly get
 
 You can find all the gory details on the [Helm Wiki](https://github.com/emacs-helm/helm/wiki).
 
+#### Fuzzy matching
+
+Helm has a built-in fuzzy matcher that is activated for some commands. Fuzzy matching is disabled by default. Currently these commands supports fuzzy matching:
+
+- `helm-recentf`: Enabled by setting `helm-recentf-fuzzy-match` to `t`.
+- `helm-mini`: Enable by setting `helm-buffers-fuzzy-matching` and `helm-recentf-fuzzy-match` to `t`.
+- `helm-buffers-list`: Enable by setting `helm-buffers-fuzzy-matching` to `t`.
+- `helm-find-files`: Enabled by default.
+- `helm-locate`: Enable by setting `helm-locate-fuzzy-match` to `t`.
+- `helm-M-x`: Enabled by setting `helm-M-x-fuzzy-match` to `t`.
+- `helm-semantic`: Enabled by setting `helm-semantic-fuzzy-match` to `t`.
+- `helm-imenu`: Enabled by setting `helm-imenu-fuzzy-match` to `t`.
+- `helm-apropos`: Enabled by setting `helm-apropos-fuzzy-match` to `t`.
+- `helm-lisp-completion-at-point`: Enabled by setting `helm-lisp-fuzzy-completion` to `t`.
+
+**IMPORTANT**: To make fuzzy-matching fast, you must not set `helm-candidate-number-limit` too high. It is recommended that you leave the variable with its default value 100. The higher you set `helm-candidate-number-limit`, the slower fuzzy-matching will be.
+
+#### Autoresize
+
+Helm can now resize according to the number of candidates with `helm-autoresize-mode`:
+
+    (helm-autoresize-mode 1)
+
+Here is a demo:
+
+![helm-buffers-list](doc/helm-autoresize-mode.gif)
+
+You can customize the minimum and maximum height that Helm can resize with these two variables:
+
+- `helm-autoresize-max-height`
+- `helm-autoresize-min-height`
+
+By default, `helm-autoresize-max-height` is set to 40, which makes Helm candidate buffer has the maximum height of 40% of current frame height. Similarly, `helm-autoresize-min-height` specifies the minimum height that Helm candidate buffer cannot be smaller.
+
+If you don't want the Helm window to be resized, but a smaller Helm window, you can set `helm-autoresize-max-height` equal to `helm-autoresize-max-height`.
+
 ## Known issues
 
 Check out the project's
 [issue list](https://github.com/emacs-helm/helm/issues?sort=created&direction=desc&state=open)
 a list of unresolved issues. By the way - feel free to fix any of them
-and sent us a pull request. :-)
+and send us a pull request. :-)
 
 ## Contributors
 
@@ -170,3 +234,4 @@ on [emacs-helm google group](https://groups.google.com/group/emacs-helm?hl=en).
 Cheers,<br>
 The Helm Team
 
+[badge-license]: https://img.shields.io/badge/license-GPL_3-green.svg

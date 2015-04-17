@@ -47,6 +47,7 @@
 (require 'perspective)
 (require 'projectile)
 
+;; TODO this may be incompatible helm which let's you find stuff in new frame
 (defmacro projectile-persp-bridge (func-name)
   "Create advice to create a perspective before invoking function FUNC-NAME.
 The advice provides bridge between perspective and projectile
@@ -55,11 +56,13 @@ project, this advice creates a new perspective for that project."
   `(defadvice ,func-name (before projectile-create-perspective-after-switching-projects activate)
      "Create a dedicated perspective for current project's window after switching projects."
      (let ((project-name (projectile-project-name)))
-           (persp-switch project-name))))
+       (when (projectile-project-p)
+         (persp-switch project-name)))))
 
 (projectile-persp-bridge projectile-dired)
 (projectile-persp-bridge projectile-find-file)
 
+;;;###autoload
 (defun projectile-persp-switch-project (project-to-switch)
   "Switch to a project or perspective we have visited before.
 If the perspective of corresponding project does not exist, this
@@ -69,14 +72,32 @@ that before `projectile-switch-project' invokes
 
 Otherwise, this function calls `persp-switch' to switch to an
 existing perspective of the project unless we're already in that
-perspective in which case `projectile-switch-project' is called."
+perspective."
   (interactive (list (projectile-completing-read "Switch to project: "
                                                  (projectile-relevant-known-projects))))
   (let* ((name (file-name-nondirectory (directory-file-name project-to-switch)))
          (persp (gethash name perspectives-hash)))
-    (if (and persp (not (equal persp persp-curr)))
+    (cond
+     ;; project-specific perspective already exists
+     ((and persp (not (equal persp persp-curr)))
+      (persp-switch name))
+     ;; project-specific perspective doesn't exist
+     ((not persp)
+      (let ((frame (selected-frame)))
         (persp-switch name)
-      (projectile-switch-project-by-name project-to-switch))))
+        (projectile-switch-project-by-name project-to-switch)
+        ;; Clean up if we switched to a new frame. `helm' for one allows finding
+        ;; files in new frames so this is a real possibility.
+        (when (not (equal frame (selected-frame)))
+          (with-selected-frame frame
+            (persp-kill name))))))))
+
+(defadvice persp-init-frame (after projectile-persp-init-frame activate)
+  "Rename initial perspective to `projectile-project-name' when a
+new frame is created in a known project."
+  (with-selected-frame frame
+    (when (projectile-project-p)
+      (persp-rename (projectile-project-name)))))
 
 (define-key projectile-mode-map [remap projectile-switch-project] 'projectile-persp-switch-project)
 

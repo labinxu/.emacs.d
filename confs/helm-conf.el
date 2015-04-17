@@ -59,7 +59,6 @@ helm-samewindow nil
 helm-quick-update t)
 
 (helm-descbinds-mode)
-(helm-match-plugin-mode t)
 (defvar helm-source-emacs-commands
 '((name . "Emacs Commands")
 (candidates . (lambda ()
