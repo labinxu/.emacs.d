@@ -28,11 +28,11 @@
       (add-to-list 'exec-path "/opt/local/bin")
       (add-to-list 'exec-path "/opt/local/sbin")
       (add-to-list 'exec-path "/usr/local/bin")
-      ))
+      (setenv "ANDROID_HOME"
+        "/Users/labinxu/Library/Android/sdk")
+))
 (setenv "PATH"
         (concat (getenv "PATH") ":" "/usr/local/bin" ":" "/opt/local/sbin" ":" "/opt/local/bin"))
-(setenv "ANDROID_HOME"
-        "C:/apps/adt-bundle-windows-x86_64-20130729/sdk")
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
