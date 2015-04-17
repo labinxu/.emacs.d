@@ -59,7 +59,7 @@
     (setq mac-command-modifier 'meta)
     )
 
-
+(global-set-key [(control f5)] 'refresh-file)
 (global-set-key [C-f1] 'show-file-name)
 (global-set-key [kp-delete] 'delete-char)
 ;;;;for neotree
