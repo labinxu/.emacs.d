@@ -29,7 +29,8 @@
 (global-set-key (kbd "C-c c x") 'cut-symbol-at-point)
 (global-set-key (kbd "C-c c o") 'occur-at-point)
 (global-set-key (kbd "C-c c m") 'extend-selection)
-
+;; C-c h f
+(global-set-key (kbd "C-c h f") 'helm-projectile-ag)
 (global-set-key (kbd "C-c s F") 'projectile-helm-ag)
 (global-set-key (kbd "C-c s f") 'helm-ag)
 
