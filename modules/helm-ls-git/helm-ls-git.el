@@ -51,6 +51,12 @@ Valid values are symbol 'abs (default) or 'relative."
   :group 'helm-ls-git
   :type 'boolean)
 
+(defcustom helm-ls-git-grep-command "git grep -n%cH --color=never --full-name -e %p %f"
+  "The git grep default command line.
+The option \"--color=always\" can be used safely, it is disabled by default though.
+The color of matched items can be customized in your .gitconfig."
+  :group 'helm-ls-git
+  :type 'string)
 
 (defface helm-ls-git-modified-not-staged-face
     '((t :foreground "yellow"))
@@ -97,6 +103,13 @@ Valid values are symbol 'abs (default) or 'relative."
   "Files which contain rebase/merge conflicts."
   :group 'helm-ls-git)
 
+
+(defvar helm-ls-git-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map helm-generic-files-map)
+    (define-key map (kbd "C-s") 'helm-ls-git-run-grep)
+    map))
+
 ;; Append visited files from `helm-source-ls-git' to `file-name-history'.
 (add-to-list 'helm-files-save-history-extra-sources "Git files")
 
@@ -108,8 +121,8 @@ Valid values are symbol 'abs (default) or 'relative."
   (when (and helm-ls-git-log-file
              (file-exists-p helm-ls-git-log-file))
     (delete-file helm-ls-git-log-file))
-  ;; `helm-resume' will use the value of `helm-default-directory'
-  ;; as value for `default-directory'.
+  ;; `helm-resume' will use the local value of `default-directory'
+  ;; in `helm-buffer' as value for `default-directory'.
   (helm-aif (helm-ls-git-root-dir)
       (with-helm-default-directory it
           (with-output-to-string
@@ -127,7 +140,7 @@ Valid values are symbol 'abs (default) or 'relative."
   (not (helm-ls-git-root-dir)))
 
 (defun helm-ls-git-transformer (candidates)
-  (cl-loop with root = (helm-ls-git-root-dir helm-default-directory)
+  (cl-loop with root = (helm-ls-git-root-dir (helm-default-directory))
         for i in candidates
         for abs = (expand-file-name i root)
         for disp = (if (and helm-ff-transformer-show-only-basename
@@ -179,14 +192,23 @@ Valid values are symbol 'abs (default) or 'relative."
                         'helm-ls-git-search-log)
      3)))
 
+(defun helm-ls-git-get-buffers ()
+  (cl-loop with rd = (helm-ls-git-root-dir)
+           for b in (helm-buffer-list)
+           for bf = (buffer-file-name (get-buffer b)) 
+           when (and bf (file-in-directory-p bf rd))
+           collect b))
+
 ;; Define the sources.
 (defvar helm-source-ls-git-status nil)
 (defvar helm-source-ls-git nil)
+(defvar helm-source-ls-git-buffers nil)
 
+;;;###autoload
 (defclass helm-ls-git-source (helm-source-in-buffer)
   ((header-name :initform 'helm-ls-git-header-name)
    (init :initform 'helm-ls-git-init)
-   (keymap :initform helm-generic-files-map)
+   (keymap :initform helm-ls-git-map)
    (help-message :initform helm-generic-file-help-message)
    (mode-line :initform helm-generic-file-mode-line-string)
    (match-part :initform (lambda (candidate)
@@ -198,13 +220,14 @@ Valid values are symbol 'abs (default) or 'relative."
    (action-transformer :initform 'helm-transform-file-load-el)
    (action :initform (helm-ls-git-actions-list))))
 
+;;;###autoload
 (defclass helm-ls-git-status-source (helm-source-in-buffer)
   ((header-name :initform 'helm-ls-git-header-name)
    (init :initform
          (lambda ()
            (helm-init-candidates-in-buffer 'global
              (helm-ls-git-status))))
-   (keymap :initform helm-generic-files-map)
+   (keymap :initform helm-ls-git-map)
    (filtered-candidate-transformer :initform 'helm-ls-git-status-transformer)
    (persistent-action :initform 'helm-ls-git-diff)
    (persistent-help :initform "Diff")
@@ -215,11 +238,11 @@ Valid values are symbol 'abs (default) or 'relative."
             "Git status" (lambda (_candidate)
                            (with-current-buffer helm-buffer
                              (funcall helm-ls-git-status-command
-                                      helm-default-directory)))))))
+                                      (helm-default-directory))))))))
 
 
-(defun helm-ls-git-grep (candidate)
-  (let* ((helm-grep-default-command "git grep -n%cH --full-name -e %p %f")
+(defun helm-ls-git-grep (_candidate)
+  (let* ((helm-grep-default-command helm-ls-git-grep-command)
          helm-grep-default-recurse-command
          (files (cond ((equal helm-current-prefix-arg '(4))
                        (list "--"
@@ -234,11 +257,15 @@ Valid values are symbol 'abs (default) or 'relative."
          ;; Expand filename of each candidate with the git root dir.
          ;; The filename will be in the help-echo prop.
          (helm-grep-default-directory-fn 'helm-ls-git-root-dir)
-         ;; `helm-grep-init' initialize `default-directory' to this value,
-         ;; So set this value (i.e `helm-ff-default-directory') to
-         ;; something else.
-         (helm-ff-default-directory (file-name-directory candidate)))
+         ;; set `helm-ff-default-directory' to the root of project.
+         (helm-ff-default-directory (helm-ls-git-root-dir)))
     (helm-do-grep-1 files)))
+
+(defun helm-ls-git-run-grep ()
+  "Run Git Grep action from helm-ls-git."
+  (interactive)
+  (with-helm-alive-p
+    (helm-quit-and-execute-action 'helm-ls-git-grep)))
 
 
 (defun helm-ls-git-search-log (_candidate)
@@ -268,7 +295,7 @@ Valid values are symbol 'abs (default) or 'relative."
                (list "status" "--porcelain")))))
 
 (defun helm-ls-git-status-transformer (candidates _source)
-  (cl-loop with root = (helm-ls-git-root-dir helm-default-directory)
+  (cl-loop with root = (helm-ls-git-root-dir (helm-default-directory))
         for i in candidates
         collect
         (cond ((string-match "^\\( M \\)\\(.*\\)" i) ; modified.
@@ -361,21 +388,21 @@ Valid values are symbol 'abs (default) or 'relative."
 (defun helm-ls-git-ls ()
   (interactive)
   (unless (and helm-source-ls-git-status
-               helm-source-ls-git)
+               helm-source-ls-git
+               helm-source-ls-git-buffers)
     (setq helm-source-ls-git-status
           (helm-make-source "Git status" 'helm-ls-git-status-source
             :fuzzy-match helm-ls-git-fuzzy-match)
           helm-source-ls-git
           (helm-make-source "Git files" 'helm-ls-git-source
-            :fuzzy-match helm-ls-git-fuzzy-match)))
+            :fuzzy-match helm-ls-git-fuzzy-match)
+          helm-source-ls-git-buffers
+          (helm-make-source "Buffers in project" 'helm-source-buffers
+            :header-name #'helm-ls-git-header-name
+            :buffer-list #'helm-ls-git-get-buffers)))
   (helm :sources '(helm-source-ls-git-status
+                   helm-source-ls-git-buffers
                    helm-source-ls-git)
-        ;; When `helm-ls-git-ls' is called from lisp
-        ;; `default-directory' is normally let-bounded,
-        ;; to some other value;
-        ;; we now set this new let-bounded value local
-        ;; to `helm-default-directory'.
-        :default-directory default-directory
         :buffer "*helm lsgit*"))
 
 
